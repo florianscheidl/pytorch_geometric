@@ -128,9 +128,10 @@ class AddMetaPathsHops(BaseTransform):
         ## ************************************************************************ ##
 
         # new implementation: reverse through metapaths and track number of walks that pass through metapaths
-        metawalks : List[List[tuple[str,int]]] = [] # TODO
 
         for j, metapath in enumerate(self.metapaths):
+
+            metawalks: List[List[tuple[str, int]]] = []  # TODO
 
             # sanity check if all edge types in the metapaths are present in graph
             for edge_type in metapath:
@@ -233,25 +234,26 @@ class AddMetaPathsHops(BaseTransform):
                 data[new_edge_type].edge_index = torch.vstack([row, col])
                 if self.weighted:
                     data[new_edge_type].edge_weight = edge_weight
+                # data[new_edge_type].walk_ids = []. Ideally, we want the metawalk information in here.
                 data.metapath_dict[new_edge_type] = metapath
 
-        # only keep metawalks of length of metapath+1 (i.e. delete all intermediate walks)
-        cutoff_metawalks = [metawalk for metawalk in metawalks if (len(metawalk)==metapath_length+1)]
-        metawalks = cutoff_metawalks
+            # only keep metawalks of length of metapath+1 (i.e. delete all intermediate walks)
+            cutoff_metawalks = [metawalk for metawalk in metawalks if (len(metawalk)==metapath_length+1)]
+            metawalks = cutoff_metawalks
 
-        walk_info = {}
-        for node_type in data.node_types:
-            num_nodes_type = list(data[node_type]._mapping.values())[0].size()[0]
-            walk_info[node_type] = [[] for x in range(num_nodes_type)]
+            dest_node_type = metapath[-1][-1]
+            num_nodes_type = list(data[dest_node_type]._mapping.values())[0].size()[0]
+            walk_info = [[] for x in range(num_nodes_type)]
 
-        for metawalk in metawalks:
-            metawalk_id = "".join(str(node[0][0]+str(node[1])+"_") for node in metawalk)
-            for node in metawalk:
-                if metawalk_id not in walk_info[node[0]][node[1]]:
-                    walk_info[node[0]][node[1]].append(metawalk_id)
+            for metawalk in metawalks:
+                assert (dest_node_type==metawalk[-1][0])
+                metawalk_id = "".join(str(node[0][0]+str(node[1])+"_") for node in metawalk)
+                if metawalk_id not in walk_info[metawalk[-1][1]]:
+                    walk_info[metawalk[-1][1]].append(metawalk_id)
 
-        for node_type in data.node_types:
-            data[node_type].walks = walk_info[node_type]
+            data[dest_node_type].walks = walk_info
+            # Currently, we store the metawalk information in the target node type. TODO: store in edge type.
+
         ## ************************************************************************ ##
 
         if self.drop_orig_edges:
