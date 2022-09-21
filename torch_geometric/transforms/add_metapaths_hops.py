@@ -1,5 +1,7 @@
 from typing import List, Optional, Tuple, Any
 
+import tqdm
+import numpy as np
 import torch
 import torch_sparse as ts
 from torch_sparse import SparseTensor
@@ -127,7 +129,7 @@ class AddMetaPathsHops(BaseTransform):
 
         # new implementation: reverse through metapaths and track number of walks that pass through metapaths
         metawalks : List[List[tuple[str,int]]] = [] # TODO
-        # metawalks = []
+
         for j, metapath in enumerate(self.metapaths):
 
             # sanity check if all edge types in the metapaths are present in graph
@@ -167,7 +169,7 @@ class AddMetaPathsHops(BaseTransform):
 
             one_hop_adjacencies = [] # TODO
             # Go through remaining edge types from target to source
-            for i, edge_type in enumerate(reversed(metapath[:-1])):  # enumerate(metapath[1:])
+            for edge_type in reversed(metapath[:-1]):
 
                 dist_adj_1 += 1
                 from_node_type = edge_type[0]
@@ -175,14 +177,19 @@ class AddMetaPathsHops(BaseTransform):
                 adj2 = SparseTensor.from_edge_index(
                     edge_index=data[edge_type].edge_index,
                     sparse_sizes=data[edge_type].size(), edge_attr=edge_weight)
-                one_hop_adjacencies.append((adj2, dist_adj_1, edge_type)) # TODO
+                # one_hop_adjacencies.append((adj2, dist_adj_1, edge_type)) # TODO
                 sources, targets = data[edge_type].edge_index.tolist() # TODO
 
-                for walk in metawalks: # TODO
-                    new_sources = [sources[p] for p in range(len(targets)) if targets[p] == walk[0][1]]
-                    for new_source in new_sources:
-                        metawalks.append([(edge_type[0],new_source)]+walk)
-                    metawalks.remove(walk)
+                new_walks = []
+                for walk in metawalks:
+                    if (walk[0][0] == edge_type[2]):
+                        new_sources = []
+                        for p in range(len(targets)):
+                            if targets[p] == walk[0][1]: # if edge target coincides with source of walk, we add this source node of this edge to the walk.
+                                new_sources.append(sources[p])
+                        for new_source in new_sources:
+                            new_walks.append([(edge_type[0], new_source)] + walk)
+                metawalks = metawalks+new_walks
 
                 # update current walk matrix, corresponding to number of walks from current edge type to target following metapath.
                 adj1 = adj2 @ adj1
@@ -228,14 +235,23 @@ class AddMetaPathsHops(BaseTransform):
                     data[new_edge_type].edge_weight = edge_weight
                 data.metapath_dict[new_edge_type] = metapath
 
-        # for u, node_type in enumerate(data.node_types): # TODO
-        #     for n in range(data.node_stores[u].num_nodes):
-        #         data[node_type].walks[n] = []
-        #
-        # for p, walk in enumerate(metawalks): # TODO
-        #     for steps in walk:
-        #         data[steps[0]].walks[steps[1]].append(p)
+        # only keep metawalks of length of metapath+1 (i.e. delete all intermediate walks)
+        cutoff_metawalks = [metawalk for metawalk in metawalks if (len(metawalk)==metapath_length+1)]
+        metawalks = cutoff_metawalks
 
+        walk_info = {}
+        for node_type in data.node_types:
+            num_nodes_type = list(data[node_type]._mapping.values())[0].size()[0]
+            walk_info[node_type] = [[] for x in range(num_nodes_type)]
+
+        for metawalk in metawalks:
+            metawalk_id = "".join(str(node[0][0]+str(node[1])+"_") for node in metawalk)
+            for node in metawalk:
+                if metawalk_id not in walk_info[node[0]][node[1]]:
+                    walk_info[node[0]][node[1]].append(metawalk_id)
+
+        for node_type in data.node_types:
+            data[node_type].walks = walk_info[node_type]
         ## ************************************************************************ ##
 
         if self.drop_orig_edges:
