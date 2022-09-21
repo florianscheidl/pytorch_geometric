@@ -6,9 +6,9 @@ from torch_geometric.data.hetero_data import HeteroData
 import torch_geometric.transforms as T
 
 test_graph = HeteroData()
-test_graph["food"].x = torch.tensor([[1],[2]]) # 1: Zucchine, 2: WhiteBread
-test_graph["country"].x = torch.tensor([[9], [8], [25]]) # AUT, CH, NL
-test_graph["person"].x = torch.tensor([[183],[174],[156],[152]]) # Flo, Bok, Lilly, Emily
+test_graph["food"].id = torch.tensor([[1],[2]]) # 1: Zucchine, 2: WhiteBread
+test_graph["country"].population = torch.tensor([[9], [8], [25]]) # AUT, CH, NL
+test_graph["person"].height = torch.tensor([[183],[174],[156],[152]]) # Flo, Bok, Lilly, Emily
 
 test_graph["person", "likes", "food"].edge_index = torch.tensor([[0, 1, 2, 3, 3],
                                                                  [0, 1, 0, 0, 1]]) # Flo likes Zucchine, Bok likes WhiteBread, Lilly likes Zucchine, Emily likes Zucchine and WhiteBread

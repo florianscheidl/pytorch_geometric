@@ -123,7 +123,11 @@ class AddMetaPathsHops(BaseTransform):
         edge_types = data.edge_types  # save original edge types
         data.metapath_dict = {}  # do not seem to use this, maybe just for debugging?
 
+        ## ************************************************************************ ##
+
         # new implementation: reverse through metapaths and track number of walks that pass through metapaths
+        metawalks : List[List[tuple[str,int]]] = [] # TODO
+        # metawalks = []
         for j, metapath in enumerate(self.metapaths):
 
             # sanity check if all edge types in the metapaths are present in graph
@@ -152,23 +156,36 @@ class AddMetaPathsHops(BaseTransform):
             dist_adj_1 = 1
             from_node_type = edge_type[0]
 
+            sources, targets = data[edge_type].edge_index.tolist() # TODO
+            listy = [[(edge_type[0], sources[w]), (edge_type[2], targets[w])] for w in range(len(targets))]
+            metawalks = metawalks+listy # TODO
+
             if self.max_sample is not None:
                 adj1 = self.sample_adj(adj1)
 
             adjacencies_node_to_target.append((adj1, dist_adj_1, from_node_type))
 
+            one_hop_adjacencies = [] # TODO
             # Go through remaining edge types from target to source
             for i, edge_type in enumerate(reversed(metapath[:-1])):  # enumerate(metapath[1:])
 
+                dist_adj_1 += 1
                 from_node_type = edge_type[0]
                 edge_weight = self._get_edge_weight(data, edge_type)
                 adj2 = SparseTensor.from_edge_index(
                     edge_index=data[edge_type].edge_index,
                     sparse_sizes=data[edge_type].size(), edge_attr=edge_weight)
+                one_hop_adjacencies.append((adj2, dist_adj_1, edge_type)) # TODO
+                sources, targets = data[edge_type].edge_index.tolist() # TODO
+
+                for walk in metawalks: # TODO
+                    new_sources = [sources[p] for p in range(len(targets)) if targets[p] == walk[0][1]]
+                    for new_source in new_sources:
+                        metawalks.append([(edge_type[0],new_source)]+walk)
+                    metawalks.remove(walk)
 
                 # update current walk matrix, corresponding to number of walks from current edge type to target following metapath.
                 adj1 = adj2 @ adj1
-                dist_adj_1 += 1
                 # sample edges if max_sample is set
                 if self.max_sample is not None:
                     adj1 = self.sample_adj(adj1)
@@ -191,8 +208,8 @@ class AddMetaPathsHops(BaseTransform):
 
             for (adj, m, from_node_type) in (reversed(adjacencies_node_to_target)):
                 idx = metapath_length-m-1
-                print(metapath[idx][0], from_node_type)
 
+                # replace this with one_hop adjacencies later. TODO
                 adjacency_curr = SparseTensor.from_edge_index(edge_index=data[metapath[idx]].edge_index,
                                                          sparse_sizes=data[metapath[idx]].size(),
                                                          edge_attr=self._get_edge_weight(data, metapath[idx]))
@@ -210,6 +227,16 @@ class AddMetaPathsHops(BaseTransform):
                 if self.weighted:
                     data[new_edge_type].edge_weight = edge_weight
                 data.metapath_dict[new_edge_type] = metapath
+
+        # for u, node_type in enumerate(data.node_types): # TODO
+        #     for n in range(data.node_stores[u].num_nodes):
+        #         data[node_type].walks[n] = []
+        #
+        # for p, walk in enumerate(metawalks): # TODO
+        #     for steps in walk:
+        #         data[steps[0]].walks[steps[1]].append(p)
+
+        ## ************************************************************************ ##
 
         if self.drop_orig_edges:
             for i in edge_types:
