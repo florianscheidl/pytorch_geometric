@@ -101,7 +101,7 @@ class AddMetaPathsHops(BaseTransform):
     def __init__(
             self,
             metapaths: List[List[EdgeType]],
-            drop_orig_edges: bool = False,
+            drop_orig_edges = False,
             keep_same_node_type: bool = False,
             drop_unconnected_nodes: bool = False,
             max_sample: Optional[int] = None,
@@ -153,13 +153,18 @@ class AddMetaPathsHops(BaseTransform):
             # Start wth last edge type in metapath:
             edge_type = metapath[-1]
             edge_weight = self._get_edge_weight(data, edge_type)
-            adj1 = SparseTensor.from_edge_index(
-                edge_index=data[edge_type].edge_index,
-                sparse_sizes=data[edge_type].size(), edge_attr=edge_weight)
+            if type(data[edge_type].edge_index) != SparseTensor:
+                adj1 = SparseTensor.from_edge_index(
+                    edge_index=data[edge_type].edge_index,
+                    sparse_sizes=data[edge_type].size(), edge_attr=edge_weight)
+            else:
+                adj1 = data[edge_type].edge_index
+                adj1.edge_attr = edge_weight
+
             dist_adj_1 = 1
             from_node_type = edge_type[0]
 
-            sources, targets = data[edge_type].edge_index.tolist() # TODO
+            sources, targets = adj1.storage.row().tolist(), adj1.storage.col().tolist() # TODO
             listy = [[(edge_type[0], sources[w]), (edge_type[2], targets[w])] for w in range(len(targets))]
             metawalks = metawalks+listy # TODO
 
@@ -175,11 +180,17 @@ class AddMetaPathsHops(BaseTransform):
                 dist_adj_1 += 1
                 from_node_type = edge_type[0]
                 edge_weight = self._get_edge_weight(data, edge_type)
-                adj2 = SparseTensor.from_edge_index(
-                    edge_index=data[edge_type].edge_index,
-                    sparse_sizes=data[edge_type].size(), edge_attr=edge_weight)
+
+                if type(data[edge_type].edge_index) != SparseTensor:
+                    adj2 = SparseTensor.from_edge_index(
+                        edge_index=data[edge_type].edge_index,
+                        sparse_sizes=data[edge_type].size(), edge_attr=edge_weight)
+                else:
+                    adj2 = data[edge_type].edge_index
+                    adj2.edge_attr = edge_weight
+
                 # one_hop_adjacencies.append((adj2, dist_adj_1, edge_type)) # TODO
-                sources, targets = data[edge_type].edge_index.tolist() # TODO
+                sources, targets = adj2.storage.row().tolist(), adj2.storage.col().tolist()
 
                 new_walks = []
                 for walk in metawalks:
@@ -218,9 +229,14 @@ class AddMetaPathsHops(BaseTransform):
                 idx = metapath_length-m-1
 
                 # replace this with one_hop adjacencies later. TODO
-                adjacency_curr = SparseTensor.from_edge_index(edge_index=data[metapath[idx]].edge_index,
+                if type(data[metapath[idx]].edge_index) != SparseTensor:
+                    adjacency_curr = SparseTensor.from_edge_index(edge_index=data[metapath[idx]].edge_index,
                                                          sparse_sizes=data[metapath[idx]].size(),
                                                          edge_attr=self._get_edge_weight(data, metapath[idx]))
+                else:
+                    adjacency_curr = data[edge_type].edge_index
+                    adjacency_curr.edge_attr = self._get_edge_weight(data, metapath[idx])
+
                 # row_curr, col_curr, edge_weight_curr = adjacency_curr.coo()
                 if adjacency_next is None:
                     adjacency_next = SparseTensor.from_dense(torch.diag(adjacency_curr.sum(dim=0)))
@@ -242,12 +258,12 @@ class AddMetaPathsHops(BaseTransform):
             metawalks = cutoff_metawalks
 
             dest_node_type = metapath[-1][-1]
-            num_nodes_type = list(data[dest_node_type]._mapping.values())[0].size()[0]
-            walk_info = [[] for x in range(num_nodes_type)]
+            num_nodes_type = data[dest_node_type].num_nodes # maybe size()[1] instead?
+            walk_info = {list(data[dest_node_type].id_map.values())[x]: [] for x in range(num_nodes_type)}
 
             for metawalk in metawalks:
                 assert (dest_node_type==metawalk[-1][0])
-                metawalk_id = "".join(str(node[0][0]+str(node[1])+"_") for node in metawalk)
+                metawalk_id = "".join(str(node[0][0:min(3,len(node[0]))]+"_"+str(node[1])+"->") for node in metawalk)
                 if metawalk_id not in walk_info[metawalk[-1][1]]:
                     walk_info[metawalk[-1][1]].append(metawalk_id)
 

@@ -1,0 +1,12 @@
+from torch_geometric.datasets.cwn_datasets.sr import SRDataset, load_sr_graph_dataset
+from torch_geometric.datasets.cwn_datasets.cluster import ClusterDataset
+from torch_geometric.datasets.cwn_datasets.tu import TUDataset, load_tu_graph_dataset
+from torch_geometric.datasets.cwn_datasets.flow import FlowDataset
+from torch_geometric.datasets.cwn_datasets.ocean import OceanDataset
+from torch_geometric.datasets.cwn_datasets.zinc import ZincDataset, load_zinc_graph_dataset
+from torch_geometric.datasets.cwn_datasets.dummy import DummyDataset, DummyMolecularDataset
+from torch_geometric.datasets.cwn_datasets.csl import CSLDataset
+from torch_geometric.datasets.cwn_datasets.ogb import OGBDataset, load_ogb_graph_dataset
+from torch_geometric.datasets.cwn_datasets.ringtransfer import RingTransferDataset, load_ring_transfer_dataset
+from torch_geometric.datasets.cwn_datasets.ringlookup import RingLookupDataset, load_ring_lookup_dataset
+

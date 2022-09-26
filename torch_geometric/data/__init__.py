@@ -12,6 +12,7 @@ from .lightning_datamodule import (
 from .makedirs import makedirs
 from .download import download_url
 from .extract import extract_tar, extract_zip, extract_bz2, extract_gz
+# from .cwn_datasets import ComplexDataset, InMemoryComplexDataset
 
 __all__ = [
     'Data',
