@@ -131,9 +131,14 @@ class TUDataset(InMemoryDataset):
                 "root folder and try again.")
         self.data, self.slices, self.sizes = out
 
+        if not hasattr(self.data, "x"):
+            self.data.x = self.data.node_stores[0]._Cochain__x
         if self.data.x is not None and not use_node_attr:
             num_node_attributes = self.num_node_attributes
             self.data.x = self.data.x[:, num_node_attributes:]
+
+        if not hasattr(self.data, "edge_attr"):
+            self.data.edge_attr = self.data.node_stores[1]._Cochain__x
         if self.data.edge_attr is not None and not use_edge_attr:
             num_edge_attributes = self.num_edge_attributes
             self.data.edge_attr = self.data.edge_attr[:, num_edge_attributes:]

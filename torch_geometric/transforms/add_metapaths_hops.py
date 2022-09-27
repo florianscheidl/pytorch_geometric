@@ -123,12 +123,18 @@ class AddMetaPathsHops(BaseTransform):
 
     def __call__(self, data: HeteroData) -> HeteroData:
         edge_types = data.edge_types  # save original edge types
-        data.metapath_dict = {}  # do not seem to use this, maybe just for debugging?
+        # data.metapath_dict = {}  # do not seem to use this, maybe just for debugging?
 
         ## ************************************************************************ ##
+        # Add unique IDs to every node to avoid confusion
+        # if 'unique_ids' not in data.stores:
+        #     next_id = 0
+        #     for node_type in data.node_types:
+        #         data[node_type].unique_ids = range(next_id, next_id + data[node_type].num_nodes)
+        #         next_id += data[node_type].num_nodes
+
 
         # new implementation: reverse through metapaths and track number of walks that pass through metapaths
-
         for j, metapath in enumerate(self.metapaths):
 
             metawalks: List[List[tuple[str, int]]] = []  # TODO
@@ -216,10 +222,11 @@ class AddMetaPathsHops(BaseTransform):
             row, col, edge_weight = adj1.coo()
             new_edge_type: tuple[str, str, str] = (
             metapath[0][0], f'metapath_{metapath_abbrev}_st',metapath[-1][-1]) # source_to_target
-            data[new_edge_type].edge_index = torch.vstack([row, col])
+            #data[new_edge_type].edge_index = torch.vstack([row, col])
+            data[new_edge_type].edge_index = SparseTensor(row=row, col=col)
             if self.weighted:
                 data[new_edge_type].edge_weight = edge_weight
-            data.metapath_dict[new_edge_type] = metapath
+            # data.metapath_dict[new_edge_type] = metapath
 
             # add metapath edges for intermediate nodes (weights correspond to the number of walks from source via intermediate node to target following a metapath walk)
             adjacencies_node_to_target.remove(adjacencies_node_to_target[-1])
@@ -247,11 +254,11 @@ class AddMetaPathsHops(BaseTransform):
 
                 row, col, edge_weight = intermediate_walk_adjacency.coo()
                 new_edge_type: tuple[str, str, str] = (from_node_type, f'metapath_{metapath_abbrev}_via_{from_node_type[0]}_at_t_dist_{m}', metapath[-1][-1]) # t_dist = distance from target
-                data[new_edge_type].edge_index = torch.vstack([row, col])
+                data[new_edge_type].edge_index = SparseTensor(row=row, col=col)
                 if self.weighted:
                     data[new_edge_type].edge_weight = edge_weight
                 # data[new_edge_type].walk_ids = []. Ideally, we want the metawalk information in here.
-                data.metapath_dict[new_edge_type] = metapath
+                # data.metapath_dict[new_edge_type] = metapath
 
             # only keep metawalks of length of metapath+1 (i.e. delete all intermediate walks)
             cutoff_metawalks = [metawalk for metawalk in metawalks if (len(metawalk)==metapath_length+1)]
@@ -259,11 +266,13 @@ class AddMetaPathsHops(BaseTransform):
 
             dest_node_type = metapath[-1][-1]
             num_nodes_type = data[dest_node_type].num_nodes # maybe size()[1] instead?
-            walk_info = {list(data[dest_node_type].id_map.values())[x]: [] for x in range(num_nodes_type)}
+
+            # walk_info = {data[dest_node_type].unique_id[x]: [] for x in range(num_nodes_type)}
+            walk_info = [[] for x in range(num_nodes_type)]
 
             for metawalk in metawalks:
                 assert (dest_node_type==metawalk[-1][0])
-                metawalk_id = "".join(str(node[0][0:min(3,len(node[0]))]+"_"+str(node[1])+"->") for node in metawalk)
+                metawalk_id = "".join(str(node[0][0:min(2,len(node[0]))]+"_"+str(node[1])+"->") for node in metawalk)
                 if metawalk_id not in walk_info[metawalk[-1][1]]:
                     walk_info[metawalk[-1][1]].append(metawalk_id)
 

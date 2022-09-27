@@ -152,9 +152,16 @@ def _collate(
         else:
             out = None
 
-        value = torch.cat(values, dim=cat_dim or 0, out=out)
+        # value = torch.cat(values, dim=cat_dim or 0, out=out)
+        # todo: This is just a workaround to an error.
+        try:
+            value = torch.cat(values, dim=cat_dim or 0, out=out)
+        except:
+            value = torch.cat(values, dim=cat_dim or 1, out=out)
         return value, slices, incs
 
+    # Undone # TODO: Attention: increment == TRUE was uncommented, because its purpose it not clear to me.
+    # This could have serious consequences and should be reviewed later.
     elif isinstance(elem, SparseTensor) and increment:
         # Concatenate a list of `SparseTensor` along the `cat_dim`.
         # NOTE: `cat_dim` may return a tuple to allow for diagonal stacking.
@@ -183,7 +190,9 @@ def _collate(
         value_dict, slice_dict, inc_dict = {}, {}, {}
         for key in elem.keys():
             value_dict[key], slice_dict[key], inc_dict[key] = _collate(
-                key, [v[key] for v in values], data_list, stores, increment)
+               key, [v[key] for v in values], data_list, stores, increment)
+            # value_dict[key], slice_dict[key], inc_dict[key] = _collate(
+            #     key, [v[key] for v in values if key in v.keys()], data_list, stores, increment)
         return value_dict, slice_dict, inc_dict
 
     elif (isinstance(elem, Sequence) and not isinstance(elem, str)

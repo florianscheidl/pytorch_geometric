@@ -18,8 +18,10 @@ from joblib import Parallel
 
 from tqdm import tqdm
 from torch_sparse import SparseTensor
+
+from torch_geometric.data import Data
 from torch_geometric.data.custom_complex import Cochain, Complex
-from torch_geometric.transforms import BaseTransform
+from torch_geometric.transforms.lifts.lift_transform import LiftTransform
 from typing import List, Dict, Optional, Union, Tuple
 from torch import Tensor
 from torch_geometric.typing import Adj
@@ -27,49 +29,49 @@ from torch_scatter import scatter
 from joblib import delayed
 
 
-class LiftGraphToSimplicialComplex(BaseTransform):
+class LiftGraphToSimplicialComplex(LiftTransform):
     """Class for lifting transformation from plain graph to simplicial complex."""
 
-    def __init__(self,
-                 lift_method: str = "inclusion",
-                 # "inclusion" (identity lifting, just stores input in the Complex data model), "clique"
-                 init_method: Optional[str] = "sum",
-                 # determines how simplex features are initialised, "sum" (sum of node features), "mean" (mean of node features), "random" (randomly sampled node features)
-                 max_clique_dim: Optional[int] = 3,
-                 # if lift_method == "clique_complex", then this is the maximum clique dimension
-                 include_adj: dict = None,  # "boundary", "coboundary", "upper", "lower"
-                 skeleton_preserving: Optional[bool] = True,  # build an assertion for this
-                 return_HoEs: Optional[bool] = False  # return boundary adjacencies in the form of list of tensors
+    def __init__(self, lift_method: str = "inclusion", init_method: Optional[str] = "sum",
+                 max_clique_dim: Optional[int] = 3, include_adj: dict = None,
+                 skeleton_preserving: Optional[bool] = True,
                  ):
         self.lift_method = lift_method
         self.max_clique_dim = max_clique_dim
         self.include_adj = include_adj
         self.skeleton_preserving = skeleton_preserving
         self.init_method = init_method
-        self.return_HoEs = return_HoEs
+        self.boundary_adjacency_tensors = None
+        super().__init__(self.lift_method, self.init_method, self.boundary_adjacency_tensors)
 
         # Depreciate as soon as we only extract boundary (and coboundary) ajdacencies.
         if self.include_adj is None:
             self.include_adj = {"lower": False}
 
-    def __call__(self, data):
+    def __call__(self, data: Data):
         if self.lift_method == "inclusion":
-            return compute_clique_complex_with_gudhi(x=data.x,
-                                                     y=data.y,
-                                                     edge_index=data.edge_index,
-                                                     size=data.num_nodes,
-                                                     include_down_adj=self.include_adj["lower"],
-                                                     init_method="sum",
-                                                     returnHoEs=self.return_HoEs)
+            self.boundary_adjacency_tensors, lifted_data = compute_clique_complex_with_gudhi(
+                x=data.x,
+                y=data.y,
+                edge_attr=data.edge_attr,
+                edge_index=data.edge_index,
+                size=data.num_nodes,
+                include_down_adj=self.include_adj["lower"],
+                init_method="sum")
+            return lifted_data
+
         elif self.lift_method == "clique":
-            return compute_clique_complex_with_gudhi(x=data.x,
-                                                     y=data.y,
-                                                     edge_index=data.edge_index,
-                                                     expansion_dim=self.max_clique_dim,
-                                                     size=data.num_nodes,
-                                                     include_down_adj=self.include_adj["lower"],
-                                                     init_method="sum",
-                                                     returnHoEs=self.return_HoEs)
+            self.boundary_adjacency_tensors, lifted_data = compute_clique_complex_with_gudhi(x=data.x,
+                                                                                             y=data.y,
+                                                                                             edge_attr=data.edge_attr,
+                                                                                             edge_index=data.edge_index,
+                                                                                             expansion_dim=self.max_clique_dim,
+                                                                                             size=data.num_nodes,
+                                                                                             include_down_adj=
+                                                                                             self.include_adj["lower"],
+                                                                                             init_method="sum")
+            return lifted_data
+
         else:
             raise Exception(f'Lift method not implemented. Please choose one of: "inclusion", "clique_complex".')
 
@@ -77,21 +79,16 @@ class LiftGraphToSimplicialComplex(BaseTransform):
         raise NotImplementedError
 
 
-class LiftGraphToCellComplex(BaseTransform):
+class LiftGraphToCellComplex(LiftTransform):
     """Class for lifting transformation from plain graph to cell complex of dimension 2."""
+
     # TODO: Potentially extend this to higher dimensions.
 
-    def __init__(self,
-                 lift_method: str = "inclusion",                # "inclusion" (identity lifting, just stores input in the Complex data model), "rings" (attaches two-cells to induced or simple cycles of length up to max_simple_cycle_length, max_induced_cycle_length respectively)
-                 max_simple_cycle_length: Optional[int] = 3,
-                 max_induced_cycle_length: Optional[int] = 3,
-                 include_adj = None, # "boundary", "coboundary", "upper", "lower"
-                 skeleton_preserving: Optional[bool] = True,    # TODO: build an assertion for this
-                 init_method: Optional[str] = 'sum', # determines how k-cell features are initialised from boundary-adjacent (k-1)-cell features, "sum", "mean", "random" (randomly sampled node features)
-                 init_edges: bool = False,  # initial features for edges from nodes
-                 init_rings: bool = False,   # initial features for 2-cells (rings) from 1-cells (edges)
-                 return_HoEs: Optional[bool] = False # return boundary adjacencies in the form of list of tensors
-                    ):
+    def __init__(self, lift_method: str = "inclusion", max_simple_cycle_length: Optional[int] = 3,
+                 max_induced_cycle_length: Optional[int] = 3, include_adj=None,
+                 skeleton_preserving: Optional[bool] = True, init_method: Optional[str] = 'sum',
+                 init_edges: bool = False, init_rings: bool = False):
+        super().__init__()
         self.lift_method = lift_method
         self.max_simple_cycle_length = max_simple_cycle_length
         self.max_induced_cycle_length = max_induced_cycle_length
@@ -100,37 +97,42 @@ class LiftGraphToCellComplex(BaseTransform):
         self.init_method = init_method
         self.init_edges = init_edges
         self.init_rings = init_rings
-        self.return_HoEs = return_HoEs
+        self.boundary_adjacency_tensors = None
 
         # Depreciate as soon as we only extract boundary (and coboundary) ajdacencies.
         if self.include_adj is None:
             self.include_adj = {"lower": False}
 
-    def __call__(self, data):
+    def __call__(self, data: Data):
         if self.lift_method == "inclusion":
-            return compute_clique_complex_with_gudhi(x=data.x,
-                                                     y=data.y,
-                                                     edge_index=data.edge_index,
-                                                     size=data.num_nodes,
-                                                     include_down_adj=self.include_adj["lower"],
-                                                     init_method=self.init_method,
-                                                     returnHoEs = self.return_HoEs)
+            self.boundary_adjacency_tensors, lifted_data = compute_clique_complex_with_gudhi(x=data.x,
+                                                                                             y=data.y,
+                                                                                             edge_attr=data.edge_attr,
+                                                                                             edge_index=data.edge_index,
+                                                                                             size=data.num_nodes,
+                                                                                             include_down_adj=
+                                                                                             self.include_adj["lower"],
+                                                                                             init_method=self.init_method)
+            return lifted_data
+
         elif self.lift_method == "rings":
-            return compute_ring_2complex(x=data.x,
-                                         y=data.y,
-                                         edge_index=data.edge_index,
-                                         edge_attr=data.edge_attr,
-                                         size=data.num_nodes,
-                                         max_simple_cycle_length=self.max_simple_cycle_length,
-                                         max_induced_cycle_length=self.max_induced_cycle_length,
-                                         include_down_adj=self.include_adj["lower"],
-                                         init_method=self.init_method,
-                                         init_edges=self.init_edges,
-                                         init_rings=self.init_rings,
-                                         return_HoE=self.return_HoEs)
+            self.boundary_adjacency_tensors, lifted_data = compute_ring_2complex(x=data.x,
+                                                                                 y=data.y,
+                                                                                 edge_index=data.edge_index,
+                                                                                 edge_attr=data.edge_attr,
+                                                                                 size=data.num_nodes,
+                                                                                 max_simple_cycle_length=self.max_simple_cycle_length,
+                                                                                 max_induced_cycle_length=self.max_induced_cycle_length,
+                                                                                 include_down_adj=self.include_adj[
+                                                                                     "lower"],
+                                                                                 init_method=self.init_method,
+                                                                                 init_edges=self.init_edges,
+                                                                                 init_rings=self.init_rings)
+            return lifted_data
 
         else:
             return Exception(f'Lift method not implemented. Please choose one of: "inclusion", "rings".')
+
 
 # **********************************************************************************************************************
 # Functions used by both classes
@@ -178,33 +180,37 @@ def build_tables(simplex_tree, size):
     simplex_tables[0] = [[v] for v in range(size)]
     id_maps[0] = {tuple([v]): v for v in range(size)}
 
-    next_id = size
+    # next_id = size
 
     for simplex, _ in simplex_tree.get_simplices():
         dim = len(simplex) - 1
         if dim == 0:
             continue
 
-        # Assign this simplex the next unused ID: originally, IDs are repeated for each dimension, now we want to use unique IDs.
+        # Assign this simplex the next unused ID: originally, IDs are repeated for each dimension, now we want to use unique IDs -> changed back to original
+        # id_maps[dim][tuple(simplex)] = next_id
+        # next_id += 1
+
+        next_id = len(simplex_tables[dim])
         id_maps[dim][tuple(simplex)] = next_id
-        next_id += 1
+
         simplex_tables[dim].append(simplex)
 
     return simplex_tables, id_maps
 
 
-def extract_boundaries_and_coboundaries_from_simplex_tree(simplex_tree, id_maps, complex_dim: int, return_HoEs: Optional[bool] = False):
+def extract_boundaries_and_coboundaries_from_simplex_tree(simplex_tree, id_maps, complex_dim: int,
+                                                          return_HoEs: Optional[bool] = False):
     """Build two maps simplex -> its coboundaries and simplex -> its boundaries"""
     # The extra dimension is added just for convenience to avoid treating it as a special case.
     boundaries = [{} for _ in range(complex_dim + 2)]  # simplex -> boundaries
     coboundaries = [{} for _ in range(complex_dim + 2)]  # simplex -> coboundaries
     boundaries_tables = [[] for _ in range(complex_dim + 1)]
 
-    boundary_adjacency_tensors = [] # list of tensors which map the ids of simplices of dimension k to their bondary adjacencies.
+    boundary_adjacency_tensors = []  # list of tensors which map the ids of simplices of dimension k to their bondary adjacencies.
 
     simplex_ids = [[] for _ in range(complex_dim + 1)]
     boundary_ids = [[] for _ in range(complex_dim + 1)]
-
 
     for simplex, _ in simplex_tree.get_simplices():
         # Extract the relevant boundary and coboundary maps
@@ -237,15 +243,12 @@ def extract_boundaries_and_coboundaries_from_simplex_tree(simplex_tree, id_maps,
             level_boundaries[tuple(coboundary)].append(tuple(simplex))
 
     # collect boundaries into one tensor
-    for dim in range(1, complex_dim+1):
+    for dim in range(1, complex_dim + 1):
         boundary_adjacency_tensor = SparseTensor(row=torch.tensor(boundary_ids[dim], dtype=torch.long),
                                                  col=torch.tensor(simplex_ids[dim], dtype=torch.long))
         boundary_adjacency_tensors.append(boundary_adjacency_tensor)
 
-    if return_HoEs:
-       return boundary_adjacency_tensors, boundaries_tables, boundaries, coboundaries
-
-    return boundaries_tables, boundaries, coboundaries
+    return boundary_adjacency_tensors, boundaries_tables, boundaries, coboundaries
 
 
 def build_adj(boundaries: List[Dict], coboundaries: List[Dict], id_maps: List[Dict], complex_dim: int,
@@ -287,10 +290,15 @@ def build_adj(boundaries: List[Dict], coboundaries: List[Dict], id_maps: List[Di
     return all_shared_boundaries, all_shared_coboundaries, lower_indexes, upper_indexes
 
 
-def construct_features(vx: Tensor, cell_tables, init_method: str) -> List:
+def construct_features(vx: Tensor, cell_tables, init_method: str, edge_attr: Optional[Tensor] = None, ) -> List:
     """Combines the features of the component vertices to initialise the cell features"""
     features = [vx]
-    for dim in range(1, len(cell_tables)):
+    if edge_attr is not None:
+        features.append(edge_attr)
+        start = 2
+    else:
+        start = 1
+    for dim in range(start, len(cell_tables)):
         aux_1 = []
         aux_0 = []
         for c, cell in enumerate(cell_tables[dim]):
@@ -325,7 +333,7 @@ def extract_labels(y, size):
 
 def generate_cochain(dim, x, all_upper_index, all_lower_index,
                      all_shared_boundaries, all_shared_coboundaries, cell_tables, boundaries_tables,
-                     complex_dim, y=None, id_map = None):
+                     complex_dim, y=None):
     """Builds a Cochain given all the adjacency data extracted from the complex."""
     if dim == 0:
         assert len(all_lower_index[dim]) == 0
@@ -365,14 +373,14 @@ def generate_cochain(dim, x, all_upper_index, all_lower_index,
     return Cochain(dim=dim, x=x, upper_index=up_index,
                    lower_index=down_index, shared_coboundaries=shared_coboundaries,
                    shared_boundaries=shared_boundaries, y=y, num_cells_down=num_cells_down,
-                   num_cells_up=num_cells_up, boundary_index=boundary_index, id_map = id_map)
+                   num_cells_up=num_cells_up, boundary_index=boundary_index)
 
 
 def compute_clique_complex_with_gudhi(x: Tensor, edge_index: Adj, size: int,
                                       expansion_dim: int = None, y: Tensor = None,
+                                      edge_attr=None,
                                       include_down_adj=True,
-                                      init_method: str = 'sum',
-                                      returnHoEs: Optional[bool] = False) -> Union[Complex, Tuple[List,Complex]]:
+                                      init_method: str = 'sum') -> Union[Complex, Tuple[List, Complex]]:
     """Generates a clique complex of a pyG graph via gudhi.
 
     Args:
@@ -397,12 +405,8 @@ def compute_clique_complex_with_gudhi(x: Tensor, edge_index: Adj, size: int,
     simplex_tables, id_maps = build_tables(simplex_tree, size)
 
     # Extracts the boundaries and coboundaries of each simplex in the complex
-    if returnHoEs:
-        boundary_adjacency_tensors, boundaries_tables, boundaries, co_boundaries = \
-            extract_boundaries_and_coboundaries_from_simplex_tree(simplex_tree, id_maps, complex_dim, return_HoEs=True)
-    else:
-        boundaries_tables, boundaries, co_boundaries = (
-            extract_boundaries_and_coboundaries_from_simplex_tree(simplex_tree, id_maps, complex_dim))
+    boundary_adjacency_tensors, boundaries_tables, boundaries, co_boundaries = \
+        extract_boundaries_and_coboundaries_from_simplex_tree(simplex_tree, id_maps, complex_dim, return_HoEs=True)
 
     # Computes the adjacencies between all the simplexes in the complex
     shared_boundaries, shared_coboundaries, lower_idx, upper_idx = build_adj(boundaries, co_boundaries, id_maps,
@@ -410,7 +414,7 @@ def compute_clique_complex_with_gudhi(x: Tensor, edge_index: Adj, size: int,
 
     # Construct features for the higher dimensions
     # TODO: Make this handle edge features as well and add alternative options to compute this.
-    xs = construct_features(x, simplex_tables, init_method)
+    xs = construct_features(x, simplex_tables, init_method, edge_attr=edge_attr)
 
     # Initialise the node / complex labels
     v_y, complex_y = extract_labels(y, size)
@@ -419,13 +423,10 @@ def compute_clique_complex_with_gudhi(x: Tensor, edge_index: Adj, size: int,
     for i in range(complex_dim + 1):
         y = v_y if i == 0 else None
         cochain = generate_cochain(i, xs[i], upper_idx, lower_idx, shared_boundaries, shared_coboundaries,
-                                   simplex_tables, boundaries_tables, complex_dim=complex_dim, y=y, id_map = id_maps[i])
+                                   simplex_tables, boundaries_tables, complex_dim=complex_dim, y=y)
         cochains.append(cochain)
 
-    if returnHoEs:
-        return boundary_adjacency_tensors, Complex(*cochains, y=complex_y, dimension=complex_dim)
-    else:
-        return Complex(*cochains, y=complex_y, dimension=complex_dim)
+    return boundary_adjacency_tensors, Complex(*cochains, y=complex_y, dimension=complex_dim)
 
 
 def convert_graph_dataset_with_gudhi(dataset, expansion_dim: int, include_down_adj=True,
@@ -474,7 +475,8 @@ def get_simple_and_induced_cycles(edge_index,
     # symmetries of cycles
 
     if max_simple_cycle_length >= max_induced_cycle_length:
-        UserWarning("Every induced cycle is a simple cycle, so setting max_induced_cycle_length <= max_simple_cycle_length is redundant.")
+        UserWarning(
+            "Every induced cycle is a simple cycle, so setting max_induced_cycle_length <= max_simple_cycle_length is redundant.")
 
     simple_cycles = set()
     sorted_simple_cycles = set()
@@ -482,7 +484,8 @@ def get_simple_and_induced_cycles(edge_index,
     sorted_induced_cycles = set()
 
     # first we get all the simple cycles
-    for k in range(3, min(max_induced_cycle_length,max_simple_cycle_length) + 1): # TODO: when adding cliques, only consider from size >3
+    for k in range(3, min(max_induced_cycle_length,
+                          max_simple_cycle_length) + 1):  # TODO: when adding cliques, only consider from size >3
         pattern = nx.cycle_graph(k)
         pattern_edge_list = list(pattern.edges)
         pattern_gt = gt.Graph(directed=False)
@@ -494,7 +497,7 @@ def get_simple_and_induced_cycles(edge_index,
             if tuple(sorted(iso)) not in sorted_simple_cycles:
                 simple_cycles.add(iso)
                 sorted_simple_cycles.add(tuple(sorted(iso)))
-    for k in range(min(max_induced_cycle_length,max_simple_cycle_length) + 1, max_induced_cycle_length + 1):
+    for k in range(min(max_induced_cycle_length, max_simple_cycle_length) + 1, max_induced_cycle_length + 1):
         pattern = nx.cycle_graph(k)
         pattern_edge_list = list(pattern.edges)
         pattern_gt = gt.Graph(directed=False)
@@ -506,7 +509,7 @@ def get_simple_and_induced_cycles(edge_index,
             if tuple(sorted(iso)) not in sorted_induced_cycles:
                 induced_cycles.add(iso)
                 sorted_induced_cycles.add(tuple(sorted(iso)))
-    rings = list(simple_cycles)+list(induced_cycles)
+    rings = list(simple_cycles) + list(induced_cycles)
     return rings
 
 
@@ -517,17 +520,17 @@ def build_tables_with_rings(edge_index, simplex_tree, size, max_simple_k, max_in
 
     # Find rings in the graph
     rings = get_simple_and_induced_cycles(edge_index,
-                                          max_simple_cycle_length = max_simple_k,
-                                          max_induced_cycle_length = max_induced_k)
+                                          max_simple_cycle_length=max_simple_k,
+                                          max_induced_cycle_length=max_induced_k)
 
     if len(rings) > 0:
         # Extend the tables with rings as 2-cells
-        next_id = sum([len(id_maps[i]) for i in range(len(id_maps))])
+        # next_id = sum([len(id_maps[i]) for i in range(len(id_maps))])
         id_maps += [{}]
         cell_tables += [[]]
         assert len(cell_tables) == 3, cell_tables
         for cell in rings:
-            #next_id = len(cell_tables[2])
+            next_id = len(cell_tables[2])
             id_maps[2][cell] = next_id
             next_id += 1
             cell_tables[2].append(list(cell))
@@ -550,18 +553,14 @@ def get_ring_boundaries(ring):
     return sorted(boundaries)
 
 
-def extract_boundaries_and_coboundaries_with_rings(simplex_tree, id_maps, return_HoE: Optional[bool] = False):
+def extract_boundaries_and_coboundaries_with_rings(simplex_tree, id_maps):
     """Build two maps: cell -> its coboundaries and cell -> its boundaries"""
 
     # Find boundaries and coboundaries up to edges by conveniently
     # invoking the code for simplicial complexes
     assert simplex_tree.dimension() <= 1
-    if return_HoE:
-        boundary_adjacency_tensors, boundaries_tables, boundaries, coboundaries = extract_boundaries_and_coboundaries_from_simplex_tree(
-        simplex_tree, id_maps, simplex_tree.dimension(), return_HoEs=True)
-    else:
-        boundaries, coboundaries = extract_boundaries_and_coboundaries_from_simplex_tree(
-            simplex_tree, id_maps, simplex_tree.dimension())
+    boundary_adjacency_tensors, boundaries_tables, boundaries, coboundaries = extract_boundaries_and_coboundaries_from_simplex_tree(
+        simplex_tree, id_maps, simplex_tree.dimension())
 
     assert len(id_maps) <= 3
     if len(id_maps) == 3:
@@ -593,10 +592,7 @@ def extract_boundaries_and_coboundaries_with_rings(simplex_tree, id_maps, return
                                                  col=torch.tensor(cell_ids, dtype=torch.long))
         boundary_adjacency_tensors.append(boundary_adjacency_tensor)
 
-    if return_HoE:
-        return boundary_adjacency_tensors, boundaries_tables, boundaries, coboundaries
-
-    return boundaries_tables, boundaries, coboundaries
+    return boundary_adjacency_tensors, boundaries_tables, boundaries, coboundaries
 
 
 def compute_ring_2complex(x: Union[Tensor, np.ndarray], edge_index: Union[Tensor, np.ndarray],
@@ -608,7 +604,7 @@ def compute_ring_2complex(x: Union[Tensor, np.ndarray], edge_index: Union[Tensor
                           init_method: str = 'sum',
                           init_edges: bool = False,
                           init_rings: bool = False,
-                          return_HoE: Optional[bool] = False) -> Union[tuple[List,Complex],Complex]:
+                          return_HoE: Optional[bool] = False) -> Union[tuple[List, Complex], Complex]:
     """Generates a ring 2-complex of a pyG graph via graph-tool.
 
     Args:
@@ -617,7 +613,6 @@ def compute_ring_2complex(x: Union[Tensor, np.ndarray], edge_index: Union[Tensor
         edge_attr: The feature matrix for the edges of the graph (shape [num_edges, num_e_feats])
         size: The number of nodes in the graph
         y: Labels for the graph nodes or a label for the whole graph.
-        max_k: maximum length of rings to look for.
         include_down_adj: Whether to add down adj in the complex or not
         init_method: How to initialise features at higher levels.
     """
@@ -643,16 +638,14 @@ def compute_ring_2complex(x: Union[Tensor, np.ndarray], edge_index: Union[Tensor
         assert edge_index.size(1) == 0
 
     # Builds tables of the cellular complexes at each level and their IDs
-    cell_tables, id_maps = build_tables_with_rings(edge_index, simplex_tree, size, max_simple_cycle_length, max_induced_cycle_length)
+    cell_tables, id_maps = build_tables_with_rings(edge_index, simplex_tree, size, max_simple_cycle_length,
+                                                   max_induced_cycle_length)
     assert len(id_maps) <= 3
     complex_dim = len(id_maps) - 1
 
     # Extracts the boundaries and coboundaries of each cell in the complex
-    if return_HoE:
-        boundary_adjacency_tensors, boundaries_tables, boundaries, co_boundaries = extract_boundaries_and_coboundaries_with_rings(
-            simplex_tree, id_maps, return_HoE=True)
-    else:
-        boundaries_tables, boundaries, co_boundaries = extract_boundaries_and_coboundaries_with_rings(simplex_tree, id_maps)
+    boundary_adjacency_tensors, boundaries_tables, boundaries, co_boundaries = extract_boundaries_and_coboundaries_with_rings(
+        simplex_tree, id_maps)
 
     # Computes the adjacencies between all the cells in the complex;
     # here we force complex dimension to be 2
@@ -661,7 +654,8 @@ def compute_ring_2complex(x: Union[Tensor, np.ndarray], edge_index: Union[Tensor
 
     # Construct features for the higher dimensions
     xs = [x, None, None]
-    constructed_features = construct_features(x, cell_tables, init_method)
+    constructed_features = construct_features(x, cell_tables,
+                                              init_method)  # TODO: construct ring features from edge features.
     if simplex_tree.dimension() == 0:
         assert len(constructed_features) == 1
     if init_rings and len(constructed_features) > 2:
@@ -704,13 +698,10 @@ def compute_ring_2complex(x: Union[Tensor, np.ndarray], edge_index: Union[Tensor
     for i in range(complex_dim + 1):
         y = v_y if i == 0 else None
         cochain = generate_cochain(i, xs[i], upper_idx, lower_idx, shared_boundaries, shared_coboundaries,
-                                   cell_tables, boundaries_tables, complex_dim=complex_dim, y=y, id_map=id_maps[i])
+                                   cell_tables, boundaries_tables, complex_dim=complex_dim, y=y)
         cochains.append(cochain)
 
-    if return_HoE:
-        return boundary_adjacency_tensors, Complex(*cochains, y=complex_y, dimension=complex_dim)
-    else:
-        return Complex(*cochains, y=complex_y, dimension=complex_dim)
+    return boundary_adjacency_tensors, Complex(*cochains, y=complex_y, dimension=complex_dim)
 
 
 def convert_graph_dataset_with_rings(dataset, max_ring_size=7, include_down_adj=False,

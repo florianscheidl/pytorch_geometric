@@ -9,8 +9,13 @@ import torch_geometric.transforms as T
 
 test_graph = HeteroData()
 test_graph["food"].id = torch.tensor([[1],[2]]) # 1: Zucchine, 2: WhiteBread
+test_graph["food"].num_nodes = 2
+
 test_graph["country"].population = torch.tensor([[9], [8], [25]]) # AUT, CH, NL
+test_graph["country"].num_nodes = 3
+
 test_graph["person"].height = torch.tensor([[183],[174],[156],[152]]) # Flo, Bok, Lilly, Emily
+test_graph["person"].num_nodes = 4
 
 test_graph["person", "likes", "food"].edge_index = torch.tensor([[0, 1, 2, 3, 3],
                                                                  [0, 1, 0, 0, 1]]) # Flo likes Zucchine, Bok likes WhiteBread, Lilly likes Zucchine, Emily likes Zucchine and WhiteBread
@@ -29,8 +34,14 @@ metapaths = [[("person","likes","food"), ("food","is_from","country"), ("country
 
 test_graph_2 = HeteroData()
 test_graph_2["food"].id = torch.tensor([[1],[2]]) # 1: Zucchine, 2: WhiteBread
+test_graph_2["food"].num_nodes = 2
+
 test_graph_2["country"].population = torch.tensor([[9], [8], [25]]) # AUT, CH
+test_graph_2["country"].num_nodes = 3
+
 test_graph_2["person"].height = torch.tensor([[183],[174]]) # Flo, Bok
+test_graph_2["person"].num_nodes = 2
+
 test_graph_2["person", "likes", "food"].edge_index = torch.tensor([[0, 1],
                                                                  [0, 1]]) # Flo likes Zucchine, Bok likes WhiteBread
 

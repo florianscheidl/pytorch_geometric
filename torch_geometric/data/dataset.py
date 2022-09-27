@@ -10,7 +10,7 @@ import numpy as np
 import torch.utils.data
 from torch import Tensor
 
-from torch_geometric.data import Data
+from torch_geometric.data import Data, HeteroData
 from torch_geometric.data.makedirs import makedirs
 
 IndexType = Union[slice, Tensor, np.ndarray, Sequence]
@@ -216,7 +216,7 @@ class Dataset(torch.utils.data.Dataset):
     def __getitem__(
         self,
         idx: Union[int, np.integer, IndexType],
-    ) -> Union['Dataset', Data]:
+    ) -> Union['Dataset', Data, HeteroData]:
         r"""In case :obj:`idx` is of type integer, will return the data object
         at index :obj:`idx` (and transforms it in case :obj:`transform` is
         present).
