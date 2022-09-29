@@ -18,6 +18,7 @@ from joblib import Parallel
 
 from tqdm import tqdm
 from torch_sparse import SparseTensor
+from torch import nn
 
 from torch_geometric.data import Data
 from torch_geometric.data.custom_complex import Cochain, Complex
@@ -293,12 +294,7 @@ def build_adj(boundaries: List[Dict], coboundaries: List[Dict], id_maps: List[Di
 def construct_features(vx: Tensor, cell_tables, init_method: str, edge_attr: Optional[Tensor] = None, ) -> List:
     """Combines the features of the component vertices to initialise the cell features"""
     features = [vx]
-    if edge_attr is not None:
-        features.append(edge_attr)
-        start = 2
-    else:
-        start = 1
-    for dim in range(start, len(cell_tables)):
+    for dim in range(1, len(cell_tables)):
         aux_1 = []
         aux_0 = []
         for c, cell in enumerate(cell_tables[dim]):
@@ -654,8 +650,7 @@ def compute_ring_2complex(x: Union[Tensor, np.ndarray], edge_index: Union[Tensor
 
     # Construct features for the higher dimensions
     xs = [x, None, None]
-    constructed_features = construct_features(x, cell_tables,
-                                              init_method)  # TODO: construct ring features from edge features.
+    constructed_features = construct_features(x, cell_tables, init_method)  # TODO: construct ring features from edge features.
     if simplex_tree.dimension() == 0:
         assert len(constructed_features) == 1
     if init_rings and len(constructed_features) > 2:
@@ -690,6 +685,8 @@ def compute_ring_2complex(x: Union[Tensor, np.ndarray], edge_index: Union[Tensor
             assert xs[1].dim() == 2
             assert xs[1].size(0) == len(id_maps[1])
             assert xs[1].size(1) == edge_attr.size(1)
+            if edge_attr.size(1) != x.size(1):
+                xs[1] = nn.Linear(edge_attr.size(1), x.size(1))(xs[1])
 
     # Initialise the node / complex labels
     v_y, complex_y = extract_labels(y, size)

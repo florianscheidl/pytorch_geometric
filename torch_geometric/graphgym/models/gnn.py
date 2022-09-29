@@ -144,7 +144,7 @@ class GNN(nn.Module):
                                    cfg.gnn.layers_pre_mp)
             dim_in = cfg.gnn.dim_inner
         if cfg.gnn.layers_mp > 0:
-            self.mp = GNNStage(dim_in=dim_in, dim_out=cfg.gnn.dim_inner,
+            self.mp = GNNStage(dim_in=dim_in, dim_out=cfg.gnn.dim_inner, # TODO: we want to change this to allow different inner dimensions
                                num_layers=cfg.gnn.layers_mp)
         self.post_mp = GNNHead(dim_in=cfg.gnn.dim_inner, dim_out=dim_out)
 

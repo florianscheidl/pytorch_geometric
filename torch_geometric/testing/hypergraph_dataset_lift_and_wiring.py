@@ -1,5 +1,6 @@
 import torch
 
+from torch_geometric.data import Dataset
 from torch_geometric.datasets import TUDataset
 from torch_geometric.transforms.lifts import LiftGraphToCellComplex
 from torch_geometric.transforms.wirings import HypergraphWiring
@@ -10,14 +11,15 @@ from torch_geometric.loader import DataLoader
 lifting_cell = LiftGraphToCellComplex(lift_method="rings",
                                       max_induced_cycle_length=10,
                                       init_edges=True,
-                                      init_method = "mean")
-wiring = HypergraphWiring(adjacency_types=["boundary","upper"])
+                                      init_rings=True,
+                                      init_method="mean")
+wiring = HypergraphWiring(adjacency_types=["boundary", "upper"])
 lift_wire = LiftAndWire(lifting_cell, wiring)
 
 #load example dataset with the given transform
 
 normal = True
-# normal = False
+normal = False
 
 if normal:
     dataset = TUDataset(root='processed_dataset',
@@ -29,6 +31,10 @@ else:
                         use_node_attr = True,
                         name='MUTAG')
 train_dataset = dataset[len(dataset) // 10:]
-train_loader = DataLoader(train_dataset, shuffle=True)
+# train_dataset = dataset
+
+train_loader = DataLoader(train_dataset, shuffle=True, batch_size=2)
+for data in train_loader:
+    print(data)
 # [data for data in train_loader]
 print(dataset[0])

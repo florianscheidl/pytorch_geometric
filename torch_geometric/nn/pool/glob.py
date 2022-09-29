@@ -1,5 +1,6 @@
 from typing import Optional
 
+import torch
 from torch import Tensor
 from torch_scatter import scatter
 
@@ -26,7 +27,10 @@ def global_add_pool(x: Tensor, batch: Optional[Tensor],
             Automatically calculated if not given. (default: :obj:`None`)
     """
     if batch is None:
-        return x.sum(dim=-2, keepdim=x.dim() == 2)
+        if isinstance(x, dict):
+            return torch.cat([x[key].sum(dim=-2, keepdim=x[key].dim() == 2) for key in x.keys()]).sum(dim=-2)
+        else:
+            return x.sum(dim=-2, keepdim=x.dim() == 2)
     size = int(batch.max().item() + 1) if size is None else size
     return scatter(x, batch, dim=-2, dim_size=size, reduce='add')
 
