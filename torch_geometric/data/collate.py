@@ -7,6 +7,7 @@ from torch import Tensor
 from torch_sparse import SparseTensor, cat
 
 from torch_geometric.data.data import BaseData
+from torch_geometric.data import HeteroData
 from torch_geometric.data.storage import BaseStorage, NodeStorage
 
 
@@ -107,6 +108,17 @@ def collate(
             repeats = [store.num_nodes for store in stores]
             out_store.batch = repeat_interleave(repeats, device=device)
             out_store.ptr = cumsum(torch.tensor(repeats, device=device))
+
+        # Add a batch vector for heterogeneous data which does satisfy the boolean statement above.
+        if add_batch and isinstance(stores[0], BaseStorage) and isinstance(data, HeteroData):
+            # try:
+            #     repeats = [data_list_element.num_nodes for data_list_element in data_list]
+            #     out_store.batch = repeat_interleave(repeats, device=device)
+            #     out_store.ptr = cumsum(torch.tensor(repeats, device=device))
+            try:
+                out_store.batch_dict = {data.node_types[i]: repeat_interleave([data_list[j].node_stores[i].num_nodes for j in range(len(data_list))]) for i in range(len(data.node_types))}
+            except:
+                raise Exception("Batching error for heterogeneous graph. Please check the data_list.")
 
     return out, slice_dict, inc_dict
 

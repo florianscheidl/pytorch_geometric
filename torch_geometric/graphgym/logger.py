@@ -252,7 +252,7 @@ def create_logger():
     r"""Create logger for the experiment."""
     loggers = []
     names = ['train', 'val', 'test']
-    for i, dataset in enumerate(range(cfg.share.num_splits)):
+    for i, dataset in enumerate(range(len(cfg.dataset.split))): # todo: I changed this to len(cfg.dataset.split)
         loggers.append(Logger(name=names[i], task_type=infer_task()))
     return loggers
 

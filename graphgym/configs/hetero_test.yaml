@@ -1,0 +1,44 @@
+# The recommended basic settings for GNN
+out_dir: results
+dataset:
+  format: PyG
+  name: TU_MUTAG # for TUDatasets, the right format is TU_{name}, e.g. TU_MUTAG
+  task: graph
+  task_type: classification
+  transductive: false
+  split: [0.8, 0.1, 0.1] # for graph tasks, the split is loader (create_loader()).
+  transform: lift_and_wire # none
+lift:
+  data_model: cell_complex # alternatively: simplicial_complex
+  init_edges: True
+  init_rings: True
+  init_method: sum
+  method: rings
+  max_induced_cycle_length: 8
+wiring:
+  adjacency_types: ["boundary","upper"]
+train:
+  batch_size: 8
+  eval_period: 50 # what does this mean?
+  ckpt_period: 100 # what does this mean?
+model:
+  type: gnn
+  loss_fun: cross_entropy
+  graph_pooling: hetero_add_pooling # type_readout
+gnn:
+  graph_type: hetero
+  layers_pre_mp: 0 # would still need to change code to use HeteroLinear here.
+  layers_mp: 2
+  layers_post_mp: 1
+  dim_inner: 64 # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
+  layer_type: hanconv # requires graph_type == hetero
+  stage_type: stack
+  batchnorm: false
+  act: prelu #
+  dropout: 0.2 # Hyperparameter search
+  agg: add # type_specific_aggregation: at the moment, aggregations ignore types and other information!
+  normalize_adj: false # not sure if applicable
+optim:
+  optimizer: adam
+  base_lr: 0.01
+  max_epoch: 400

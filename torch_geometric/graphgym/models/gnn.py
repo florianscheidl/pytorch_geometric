@@ -24,10 +24,12 @@ def GNNLayer(dim_in, dim_out, has_act=True):
         has_act (bool): Whether has activation function after the layer
 
     """
-    return GeneralLayer(
-        cfg.gnn.layer_type,
-        layer_config=new_layer_config(dim_in, dim_out, 1, has_act=has_act,
-                                      has_bias=False, cfg=cfg))
+    return GeneralLayer(name=cfg.gnn.layer_type,
+                        layer_config=new_layer_config(dim_in,
+                                                      dim_out,
+                                                      1,
+                                                      has_act=has_act,
+                                                      has_bias=False, cfg=cfg))
 
 
 def GNNPreMP(dim_in, dim_out, num_layers):
@@ -72,15 +74,28 @@ class GNNStackStage(nn.Module):
     def forward(self, batch):
         """"""
         for i, layer in enumerate(self.children()):
-            x = batch.x
-            batch = layer(batch)
-            if cfg.gnn.stage_type == 'skipsum':
-                batch.x = x + batch.x
-            elif cfg.gnn.stage_type == 'skipconcat' and \
-                    i < self.num_layers - 1:
-                batch.x = torch.cat([x, batch.x], dim=1)
-        if cfg.gnn.l2norm:
-            batch.x = F.normalize(batch.x, p=2, dim=-1)
+            if cfg.gnn.graph_type=='hetero':
+                x_dict = batch.x_dict
+                batch = layer(batch) # TODO: is this sufficient?
+                if cfg.gnn.stage_type == 'skipsum':
+                    batch.x_dict = x_dict + batch.x_dict
+                elif cfg.gnn.stage_type == 'skipconcat' and \
+                        i < self.num_layers - 1:
+                    batch.x_dict = {key: torch.cat([x_dict[key], batch.x_dict[key]], dim=1) for key in x_dict.keys()}
+                # if cfg.gnn.l2norm:
+                    # TODO: Causing errors at the moment, include support later
+                    # batch.x_dict = {key: F.normalize(batch.x_dict[key], p=2, dim=-1) for key in x_dict.keys()}
+            elif cfg.gnn.graph_type=='homo':
+                x = batch.x
+                batch = layer(batch)
+                if cfg.gnn.stage_type == 'skipsum':
+                    batch.x = x + batch.x
+                elif cfg.gnn.stage_type == 'skipconcat' and \
+                        i < self.num_layers - 1:
+                    batch.x = torch.cat([x, batch.x], dim=1)
+                if cfg.gnn.l2norm:
+                    batch.x = F.normalize(batch.x, p=2, dim=-1)
+
         return batch
 
 

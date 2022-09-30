@@ -43,6 +43,7 @@ def set_cfg(cfg):
     cfg.lift.max_simple_cycle_length = 2
     cfg.lift.max_induced_cycle_length = 2
     cfg.lift.init_edges = False
+    cfg.lift.init_simplex = False
     cfg.lift.init_rings = False
 
     # ----------------------------------------------------------------------- #

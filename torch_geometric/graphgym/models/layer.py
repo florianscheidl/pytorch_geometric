@@ -1,19 +1,24 @@
 import copy
 from dataclasses import dataclass, replace
+from typing import Optional
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch import Tensor
 
 import torch_geometric as pyg
 import torch_geometric.graphgym.models.act
 import torch_geometric.graphgym.register as register
+from torch_geometric.graphgym.config import cfg
 from torch_geometric.graphgym.contrib.layer.generalconv import (
     GeneralConvLayer,
     GeneralEdgeConvLayer,
 )
 from torch_geometric.graphgym.register import register_layer
 from torch_geometric.nn import Linear as Linear_pyg
+from torch_geometric.nn.dense import HeteroLinear
+from torch_geometric.typing import Metadata
 
 
 @dataclass
@@ -85,7 +90,12 @@ class GeneralLayer(nn.Module):
         self.has_l2norm = layer_config.has_l2norm
         has_bn = layer_config.has_batchnorm
         layer_config.has_bias = not has_bn
-        self.layer = register.layer_dict[name](layer_config, **kwargs)
+
+        # TODO: this was added to accomodate methods that require metadata and out_channels
+        if name == 'hanconv':
+            self.layer = register.layer_dict[name](in_channels=layer_config.dim_in, out_channels=layer_config.dim_out, metadata=cfg.dataset.metadata, **kwargs)
+        else:
+            self.layer = register.layer_dict[name](layer_config, **kwargs)
         layer_wrapper = []
         if has_bn:
             layer_wrapper.append(
@@ -100,15 +110,24 @@ class GeneralLayer(nn.Module):
         self.post_layer = nn.Sequential(*layer_wrapper)
 
     def forward(self, batch):
-        batch = self.layer(batch)
-        if isinstance(batch, torch.Tensor):
-            batch = self.post_layer(batch)
+        if not isinstance(batch, Tensor) and cfg.gnn.graph_type == 'hetero':
+            edge_index_dict = {batch.edge_types[i]: batch.edge_stores[i]["edge_index"] for i in range(len(batch.edge_types))}
+            batch.x_dict = self.layer(x_dict=batch.x_dict, edge_index_dict=edge_index_dict)  # TODO: is this sufficient?
+            # TODO: We don't support batchnorm, dropout, and activation for hetero graphs yet.
+            batch.x_dict = {key: self.post_layer(batch.x_dict[key]) for key in batch.x_dict.keys()}# TODO: this applies various transformations to the single node types, not sure if this is desirable.
             if self.has_l2norm:
-                batch = F.normalize(batch, p=2, dim=1)
-        else:
-            batch.x = self.post_layer(batch.x)
-            if self.has_l2norm:
-                batch.x = F.normalize(batch.x, p=2, dim=1)
+                batch.x_dict = {key: F.normalize(batch.x_dict[key], p=2, dim=-1) for key in batch.x_dict.keys()}
+
+        elif cfg.gnn.graph_type == 'homo':
+            batch = self.layer(batch)
+            if isinstance(batch, torch.Tensor):
+                batch = self.post_layer(batch)
+                if self.has_l2norm:
+                    batch = F.normalize(batch, p=2, dim=1)
+            else:
+                batch.x = self.post_layer(batch.x)
+                if self.has_l2norm:
+                    batch.x = F.normalize(batch.x, p=2, dim=1)
         return batch
 
 
@@ -172,7 +191,7 @@ class Linear(nn.Module):
         if isinstance(batch, torch.Tensor):
             batch = self.model(batch)
         else:
-            batch.x = self.model(batch.x)
+             batch.x = self.model(batch.x)
         return batch
 
 
@@ -236,10 +255,23 @@ class MLP(nn.Module):
                 num_layers=layer_config.num_layers - 1,
                 dim_in=layer_config.dim_in, dim_out=dim_inner,
                 dim_inner=dim_inner, final_act=True)
+            # if cfg.gnn.graph_type=="hetero":
+            #     layers.append(GeneralMultiLayer('heterolinear', sub_layer_config, **kwargs))
+            # else:
             layers.append(GeneralMultiLayer('linear', sub_layer_config))
             layer_config = replace(layer_config, dim_in=dim_inner)
+            # if cfg.gnn.graph_type=="hetero":
+            #     layers.append(HeteroLinear(in_channels=1,
+            #                                out_channels=1,
+            #                                num_types=1))
+            # else:
             layers.append(Linear(layer_config))
         else:
+            # if cfg.gnn.graph_type=="hetero":
+            #     layers.append(HeteroLinear(in_channels=1,
+            #                                out_channels=1,
+            #                                num_types=1))
+            # else:
             layers.append(Linear(layer_config))
         self.model = nn.Sequential(*layers)
 

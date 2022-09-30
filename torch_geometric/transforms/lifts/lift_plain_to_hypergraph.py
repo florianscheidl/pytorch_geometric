@@ -124,8 +124,7 @@ class LiftGraphToCellComplex(LiftTransform):
                                                                                  size=data.num_nodes,
                                                                                  max_simple_cycle_length=self.max_simple_cycle_length,
                                                                                  max_induced_cycle_length=self.max_induced_cycle_length,
-                                                                                 include_down_adj=self.include_adj[
-                                                                                     "lower"],
+                                                                                 include_down_adj=self.include_adj["lower"],
                                                                                  init_method=self.init_method,
                                                                                  init_edges=self.init_edges,
                                                                                  init_rings=self.init_rings)

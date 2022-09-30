@@ -33,7 +33,7 @@ else:
 train_dataset = dataset[len(dataset) // 10:]
 # train_dataset = dataset
 
-train_loader = DataLoader(train_dataset, shuffle=True, batch_size=2)
+train_loader = DataLoader(train_dataset, shuffle=True, batch_size=4)
 for data in train_loader:
     print(data)
 # [data for data in train_loader]

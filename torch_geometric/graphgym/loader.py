@@ -1,8 +1,11 @@
+import random
 from typing import Callable
 
 import torch
+from sklearn.model_selection import train_test_split
 
 import torch_geometric.graphgym.register as register
+
 import torch_geometric.transforms as T
 from torch_geometric.datasets import (
     PPI,
@@ -12,9 +15,14 @@ from torch_geometric.datasets import (
     MNISTSuperpixels,
     Planetoid,
     QM7b,
+    QM9,
     TUDataset,
 )
 from torch_geometric.graphgym.config import cfg
+from torch_geometric.transforms.liwich_transforms import LiftAndWire
+import torch_geometric.transforms as T
+import torch_geometric.transforms.lifts as lifts
+import torch_geometric.transforms.wirings as wirings
 from torch_geometric.graphgym.models.transform import (
     create_link_label,
     neg_sampling_transform,
@@ -47,7 +55,7 @@ register.register_dataset('PubMed', planetoid_dataset('PubMed'))
 register.register_dataset('PPI', PPI)
 
 
-def load_pyg(name, dataset_dir):
+def load_pyg(name, dataset_dir, pre_transform=None):
     """
     Load PyG dataset objects. (More PyG datasets will be supported)
 
@@ -60,32 +68,34 @@ def load_pyg(name, dataset_dir):
     """
     dataset_dir = '{}/{}'.format(dataset_dir, name)
     if name in ['Cora', 'CiteSeer', 'PubMed']:
-        dataset = Planetoid(dataset_dir, name)
+        dataset = Planetoid(dataset_dir, name, pre_transform=pre_transform)
     elif name[:3] == 'TU_':
         # TU_IMDB doesn't have node features
         if name[3:] == 'IMDB':
             name = 'IMDB-MULTI'
-            dataset = TUDataset(dataset_dir, name, transform=T.Constant())
+            dataset = TUDataset(dataset_dir, name, pre_transform=T.compose([T.Constant, pre_transform]))
         else:
-            dataset = TUDataset(dataset_dir, name[3:])
+            dataset = TUDataset(dataset_dir, name[3:], pre_transform=pre_transform) # TODO: could also put the transform here.
     elif name == 'Karate':
-        dataset = KarateClub()
+        dataset = KarateClub(pre_transform=pre_transform)
     elif 'Coauthor' in name:
         if 'CS' in name:
-            dataset = Coauthor(dataset_dir, name='CS')
+            dataset = Coauthor(dataset_dir, name='CS',pre_transform=pre_transform)
         else:
-            dataset = Coauthor(dataset_dir, name='Physics')
+            dataset = Coauthor(dataset_dir, name='Physics',pre_transform=pre_transform)
     elif 'Amazon' in name:
         if 'Computers' in name:
-            dataset = Amazon(dataset_dir, name='Computers')
+            dataset = Amazon(dataset_dir, name='Computers',pre_transform=pre_transform)
         else:
-            dataset = Amazon(dataset_dir, name='Photo')
+            dataset = Amazon(dataset_dir, name='Photo', pre_transform=pre_transform)
     elif name == 'MNIST':
-        dataset = MNISTSuperpixels(dataset_dir)
+        dataset = MNISTSuperpixels(dataset_dir, pre_transform=pre_transform)
     elif name == 'PPI':
-        dataset = PPI(dataset_dir)
+        dataset = PPI(dataset_dir, pre_transform=pre_transform)
     elif name == 'QM7b':
-        dataset = QM7b(dataset_dir)
+        dataset = QM7b(dataset_dir, pre_transform=pre_transform)
+    elif name == 'qm9':
+        dataset = QM9(dataset_dir, pre_transform=pre_transform)
     else:
         raise ValueError('{} not support'.format(name))
 
@@ -188,8 +198,31 @@ def load_dataset():
         if dataset is not None:
             return dataset
     # Load from Pytorch Geometric dataset
+    if cfg.dataset.pre_transform == "lift_wire":
+        if cfg.lift.data_model == "simplicial_complex":
+            lift = lifts.LiftGraphToSimplicialComplex(lift_method=cfg.lift.method,
+                                                      init_method=cfg.lift.init_method,
+                                                      max_clique_dim=cfg.lift.max_clique_dim
+                                                      )
+        elif cfg.lift.data_model == "cell_complex":
+            lift = lifts.LiftGraphToCellComplex(lift_method=cfg.lift.method,
+                                                init_method=cfg.lift.init_method,
+                                                max_simple_cycle_length=cfg.lift.max_simple_cycle_length,
+                                                max_induced_cycle_length=cfg.lift.max_induced_cycle_length,
+                                                init_edges=cfg.lift.init_edges,
+                                                init_rings=cfg.lift.init_rings
+                                                )
+        else:
+            raise NotImplementedError
+        if cfg.lift.data_model in ["simplicial_complex", "cell_complex"]:
+            wiring = wirings.HypergraphWiring(cfg.wiring.adjacency_types)
+        else:
+            raise NotImplementedError
+        pre_transform = LiftAndWire(lift, wiring)
+    else:
+        pre_transform = None
     if format == 'PyG':
-        dataset = load_pyg(name, dataset_dir)
+        dataset = load_pyg(name, dataset_dir, pre_transform=pre_transform)
     # Load from OGB formatted data
     elif format == 'OGB':
         dataset = load_ogb(name.replace('_', '-'), dataset_dir)
@@ -311,12 +344,22 @@ def create_loader():
     dataset = create_dataset()
     # train loader
     if cfg.dataset.task == 'graph':
-        id = dataset.data['train_graph_index']
-        loaders = [
-            get_loader(dataset[id], cfg.train.sampler, cfg.train.batch_size,
-                       shuffle=True)
-        ]
-        delattr(dataset.data, 'train_graph_index')
+        if hasattr(dataset.data, 'train_graph_index'):
+            id = dataset.data['train_graph_index']
+            loaders = [
+                get_loader(dataset[id], cfg.train.sampler, cfg.train.batch_size,
+                           shuffle=True)
+            ]
+            delattr(dataset.data, 'train_graph_index')
+        else:
+            UserWarning('Custom loader: no train_graph_index in dataset, use full graph') #TODO
+            [train_ratio, val_ratio, test_ratio] = cfg.dataset.split
+            train_index, test_val_index = train_test_split(list(range(len(dataset))), test_size=val_ratio + test_ratio, shuffle=True, random_state=cfg.seed)
+            val_test_indices = train_test_split(test_val_index, test_size=test_ratio / (val_ratio + test_ratio), shuffle=True, random_state=cfg.seed)
+            loaders = [
+                get_loader(dataset[train_index], cfg.train.sampler, cfg.train.batch_size,
+                           shuffle=True)
+            ]
     else:
         loaders = [
             get_loader(dataset, cfg.train.sampler, cfg.train.batch_size,
@@ -324,14 +367,20 @@ def create_loader():
         ]
 
     # val and test loaders
-    for i in range(cfg.share.num_splits - 1):
+    for i in range(len(cfg.dataset.split)-1): # TODO: I changed this to the length of dataset.split
         if cfg.dataset.task == 'graph':
-            split_names = ['val_graph_index', 'test_graph_index']
-            id = dataset.data[split_names[i]]
-            loaders.append(
-                get_loader(dataset[id], cfg.val.sampler, cfg.train.batch_size,
-                           shuffle=False))
-            delattr(dataset.data, split_names[i])
+            if hasattr(dataset.data, 'val_graph_index') and hasattr(dataset.data, 'test_graph_index'):
+                split_names = ['val_graph_index', 'test_graph_index']
+                id = dataset.data[split_names[i]]
+                loaders.append(
+                    get_loader(dataset[id], cfg.val.sampler, cfg.train.batch_size,
+                               shuffle=False))
+                delattr(dataset.data, split_names[i])
+            else:
+                UserWarning('Custom loader: no val_graph_index or test_graph_index in dataset, use customised test/val split.')
+                loaders.append(
+                    get_loader(dataset[val_test_indices[i]], cfg.val.sampler, cfg.train.batch_size,
+                               shuffle=False))
         else:
             loaders.append(
                 get_loader(dataset, cfg.val.sampler, cfg.train.batch_size,
