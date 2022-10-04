@@ -9,7 +9,7 @@ from torch_geometric.loader import DataLoader
 
 # configure lift and wiring
 lifting_cell = LiftGraphToCellComplex(lift_method="rings",
-                                      max_induced_cycle_length=10,
+                                      max_induced_cycle_length=5,
                                       init_edges=True,
                                       init_rings=True,
                                       init_method="mean")
@@ -20,21 +20,28 @@ lift_wire = LiftAndWire(lifting_cell, wiring)
 
 normal = True
 normal = False
+pre_transform = True
+# name='PROTEINS'
+name='MUTAG'
+# name='NCI1'
 
 if normal:
     dataset = TUDataset(root='processed_dataset',
                         use_node_attr=True,
                         name='MUTAG')
-else:
+elif pre_transform:
     dataset = TUDataset(pre_transform=lift_wire,
                         root='processed_dataset',
                         use_node_attr = True,
-                        name='MUTAG')
-train_dataset = dataset[len(dataset) // 10:]
+                        name=name)
+else:
+    dataset = TUDataset(transform=lift_wire,
+                        root='processed_dataset',
+                        use_node_attr = True,
+                        name=name)
+# train_dataset = dataset[len(dataset) // 10:]
+train_dataset = dataset[0:19]
 # train_dataset = dataset
 
 train_loader = DataLoader(train_dataset, shuffle=True, batch_size=4)
-for data in train_loader:
-    print(data)
-# [data for data in train_loader]
 print(dataset[0])

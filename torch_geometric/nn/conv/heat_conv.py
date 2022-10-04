@@ -57,12 +57,20 @@ class HEATConv(MessagePassing):
           edge features :math:`(|\mathcal{E}|, D)` *(optional)*
         - **output:** node features :math:`(|\mathcal{V}|, F_{out})`
     """
-    def __init__(self, in_channels: int, out_channels: int,
-                 num_node_types: int, num_edge_types: int,
-                 edge_type_emb_dim: int, edge_dim: int, edge_attr_emb_dim: int,
-                 heads: int = 1, concat: bool = True,
-                 negative_slope: float = 0.2, dropout: float = 0.0,
-                 root_weight: bool = True, bias: bool = True, **kwargs):
+    def __init__(self,
+                 in_channels: int,
+                 out_channels: int,
+                 num_node_types: int, # extract from metadata?
+                 num_edge_types: int, # extract from metadata?
+                 edge_type_emb_dim: int, # extract from metadata?
+                 edge_dim: int, # extract from metadata?
+                 edge_attr_emb_dim: int, # extract from metadata?
+                 heads: int = 1,
+                 concat: bool = True,
+                 negative_slope: float = 0.2,
+                 dropout: float = 0.0,
+                 root_weight: bool = True,
+                 bias: bool = True, **kwargs):
 
         kwargs.setdefault('aggr', 'add')
         super().__init__(node_dim=0, **kwargs)

@@ -37,12 +37,10 @@ def type_wise_hetero_pooling(batch, size=None):
 
 @register_pooling('hetero_add_pooling')
 def type_wise_hetero_pooling(batch, size=None):
-    cell_dim_wise_scatter = {}
-    for key in batch.batch_dict.keys():
-        cell_dim_wise_scatter[key] = scatter(batch.x_dict[key], batch.batch_dict[key], dim=0, reduce='add')
+    cell_dim_wise_scatter = {key: scatter(batch.x_dict[key], batch.batch_dict[key], dim=0, reduce='add') for key in batch.x_dict.keys() if batch.x_dict[key] is not None}
     out = []
     for i in range(len(batch)):
-        single_batch_mixed_cells = torch.vstack([cell_dim_wise_scatter[key][i] for key in cell_dim_wise_scatter.keys()]).sum(dim=0)
+        single_batch_mixed_cells = torch.vstack([cell_dim_wise_scatter[key][i] for key in cell_dim_wise_scatter.keys() if len(cell_dim_wise_scatter[key])>i]).sum(dim=0)
         out.append(single_batch_mixed_cells)
     out_tensor = torch.vstack(out)
     return out_tensor

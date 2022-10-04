@@ -1,5 +1,5 @@
 import random
-from typing import Callable
+from typing import Callable, Optional
 
 import torch
 from sklearn.model_selection import train_test_split
@@ -55,7 +55,7 @@ register.register_dataset('PubMed', planetoid_dataset('PubMed'))
 register.register_dataset('PPI', PPI)
 
 
-def load_pyg(name, dataset_dir, pre_transform=None):
+def load_pyg(name, dataset_dir, pre_transform=None, transform=None):
     """
     Load PyG dataset objects. (More PyG datasets will be supported)
 
@@ -75,7 +75,7 @@ def load_pyg(name, dataset_dir, pre_transform=None):
             name = 'IMDB-MULTI'
             dataset = TUDataset(dataset_dir, name, pre_transform=T.compose([T.Constant, pre_transform]))
         else:
-            dataset = TUDataset(dataset_dir, name[3:], pre_transform=pre_transform) # TODO: could also put the transform here.
+            dataset = TUDataset(dataset_dir, name[3:], pre_transform=pre_transform) if pre_transform is not None else TUDataset(dataset_dir, name[3:], transform=transform) # TODO: could also put the transform here.
     elif name == 'Karate':
         dataset = KarateClub(pre_transform=pre_transform)
     elif 'Coauthor' in name:
@@ -197,32 +197,13 @@ def load_dataset():
         dataset = func(format, name, dataset_dir)
         if dataset is not None:
             return dataset
+
     # Load from Pytorch Geometric dataset
-    if cfg.dataset.pre_transform == "lift_wire":
-        if cfg.lift.data_model == "simplicial_complex":
-            lift = lifts.LiftGraphToSimplicialComplex(lift_method=cfg.lift.method,
-                                                      init_method=cfg.lift.init_method,
-                                                      max_clique_dim=cfg.lift.max_clique_dim
-                                                      )
-        elif cfg.lift.data_model == "cell_complex":
-            lift = lifts.LiftGraphToCellComplex(lift_method=cfg.lift.method,
-                                                init_method=cfg.lift.init_method,
-                                                max_simple_cycle_length=cfg.lift.max_simple_cycle_length,
-                                                max_induced_cycle_length=cfg.lift.max_induced_cycle_length,
-                                                init_edges=cfg.lift.init_edges,
-                                                init_rings=cfg.lift.init_rings
-                                                )
-        else:
-            raise NotImplementedError
-        if cfg.lift.data_model in ["simplicial_complex", "cell_complex"]:
-            wiring = wirings.HypergraphWiring(cfg.wiring.adjacency_types)
-        else:
-            raise NotImplementedError
-        pre_transform = LiftAndWire(lift, wiring)
-    else:
-        pre_transform = None
     if format == 'PyG':
-        dataset = load_pyg(name, dataset_dir, pre_transform=pre_transform)
+        if cfg.dataset.pre_transform == "lift_and_wire" or cfg.dataset.transform == "lift_and_wire":
+            return lift_wire_transform_formatter(name, dataset_dir, pre_transform=cfg.dataset.pre_transform, transform=cfg.dataset.transform)
+        else:
+            dataset = load_pyg(name, dataset_dir, pre_transform=cfg.dataset.pre_transform, transform=cfg.dataset.transform)
     # Load from OGB formatted data
     elif format == 'OGB':
         dataset = load_ogb(name.replace('_', '-'), dataset_dir)
@@ -230,6 +211,31 @@ def load_dataset():
         raise ValueError('Unknown data format: {}'.format(format))
     return dataset
 
+def lift_wire_transform_formatter(name, dataset_dir, pre_transform=None, transform=None):
+    if cfg.lift.data_model == "simplicial_complex":
+        lift = lifts.LiftGraphToSimplicialComplex(lift_method=cfg.lift.method,
+                                                  init_method=cfg.lift.init_method,
+                                                  max_clique_dim=cfg.lift.max_clique_dim
+                                                  )
+    elif cfg.lift.data_model == "cell_complex":
+        lift = lifts.LiftGraphToCellComplex(lift_method=cfg.lift.method,
+                                            init_method=cfg.lift.init_method,
+                                            max_simple_cycle_length=cfg.lift.max_simple_cycle_length,
+                                            max_induced_cycle_length=cfg.lift.max_induced_cycle_length,
+                                            init_edges=cfg.lift.init_edges,
+                                            init_rings=cfg.lift.init_rings
+                                            )
+    else:
+        raise NotImplementedError
+    if cfg.lift.data_model in ["simplicial_complex", "cell_complex"]:
+        wiring = wirings.HypergraphWiring(cfg.wiring.adjacency_types)
+    else:
+        raise NotImplementedError
+    pre_transform = LiftAndWire(lift, wiring) if pre_transform is not None else pre_transform
+    transform = LiftAndWire(lift, wiring) if transform is not None else transform
+    if pre_transform is not None and transform is not None:
+        raise Exception("pre_transform and transform are both not None.")
+    return load_pyg(name, dataset_dir, pre_transform=pre_transform, transform=transform)
 
 def set_dataset_info(dataset):
     r"""

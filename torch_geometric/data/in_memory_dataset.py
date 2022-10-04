@@ -97,8 +97,8 @@ class InMemoryDataset(Dataset):
         data, slices, _ = collate(
             data_list[0].__class__,
             data_list=data_list,
-            increment=False,  # TODO: changed this default from False,
-            add_batch=False,
+            increment=False, # TODO: changed from default = False
+            add_batch=True, # TODO: changed this default from False to True
         )
 
         return data, slices

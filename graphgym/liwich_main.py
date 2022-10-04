@@ -15,7 +15,7 @@ from torch_geometric.graphgym.config import (
     set_out_dir,
     set_run_dir,
 )
-from torch_geometric.graphgym.loader import load_pyg
+from torch_geometric.graphgym.loader import lift_wire_transform_formatter
 from torch_geometric.graphgym.logger import set_printing
 from torch_geometric.graphgym.train import GraphGymDataModule
 from torch_geometric.graphgym.model_builder import create_model
@@ -54,8 +54,8 @@ if __name__ == '__main__':
     datamodule = GraphGymDataModule() # how does this know which config to use?
 
     # This is usually hidden in the GraphGymDataModule, but I need the dataset metadata for hanconv, so I'm loading it here too...
-    dataset = load_pyg(name=cfg.dataset.name, dataset_dir=cfg.dataset.dir, pre_transform=cfg.dataset.pre_transform)
-    cfg.dataset.metadata = dataset.data.metadata()
+    transformed_dataset = lift_wire_transform_formatter(name=cfg.dataset.name, dataset_dir=cfg.dataset.dir+"_", pre_transform=cfg.dataset.transform) # attention: here we pretransform with the transform to obtain the metadata.
+    cfg.dataset.metadata = transformed_dataset.data.metadata()
 
     model = create_model() # how does this know which config to use?
     # Print model info
@@ -65,4 +65,4 @@ if __name__ == '__main__':
     logging.info(cfg)
     cfg.params = params_count(model)
     logging.info('Num parameters: %s', cfg.params)
-    wandb_train.train(model, datamodule, logger=True, use_wandb=True)
+    wandb_train.train(model, datamodule, logger=True, use_wandb=use_wandb)

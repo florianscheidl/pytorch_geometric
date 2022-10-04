@@ -92,8 +92,19 @@ class GeneralLayer(nn.Module):
         layer_config.has_bias = not has_bn
 
         # TODO: this was added to accomodate methods that require metadata and out_channels
-        if name == 'hanconv':
-            self.layer = register.layer_dict[name](in_channels=layer_config.dim_in, out_channels=layer_config.dim_out, metadata=cfg.dataset.metadata, **kwargs)
+        if name in ['hanconv','hgtconv']:
+            self.layer = register.layer_dict[name](in_channels=layer_config.dim_in,
+                                                   out_channels=layer_config.dim_out,
+                                                   metadata=cfg.dataset.metadata, **kwargs)
+        elif name=='heatconv':
+            self.layer = register.layer_dict[name](in_channels=layer_config.dim_in,
+                                                   out_channels=layer_config.dim_out,
+                                                   num_node_types=len(cfg.dataset.metadata[0]),
+                                                   num_edge_types=len(cfg.dataset.metadata[1]),
+                                                   edge_type_emb_dim=cfg.gnn.heat_edge_type_emb_dim,
+                                                   edge_dim=cfg.gnn.heat_edge_dim,
+                                                   edge_attr_emb_dim=cfg.gnn.heat_edge_attr_emb_dim,
+                                                   **kwargs)
         else:
             self.layer = register.layer_dict[name](layer_config, **kwargs)
         layer_wrapper = []
@@ -110,14 +121,16 @@ class GeneralLayer(nn.Module):
         self.post_layer = nn.Sequential(*layer_wrapper)
 
     def forward(self, batch):
-        if not isinstance(batch, Tensor) and cfg.gnn.graph_type == 'hetero':
-            edge_index_dict = {batch.edge_types[i]: batch.edge_stores[i]["edge_index"] for i in range(len(batch.edge_types))}
+        if not isinstance(batch, Tensor) and cfg.gnn.layer_type in ['hanconv', 'hgtconv']:
+            edge_index_dict = {batch.edge_types[i]: batch.edge_stores[i]["edge_index"] for i in range(len(batch.edge_types)) if "edge_index" in batch.edge_stores[i]} # TODO: this might be (super) inefficient -> more importantly, it is wrong.
+            batch.x_dict = {key: batch.x_dict[key] for key in batch.x_dict.keys() if isinstance(batch.x_dict[key], Tensor)}
             batch.x_dict = self.layer(x_dict=batch.x_dict, edge_index_dict=edge_index_dict)  # TODO: is this sufficient?
-            # TODO: We don't support batchnorm, dropout, and activation for hetero graphs yet.
-            batch.x_dict = {key: self.post_layer(batch.x_dict[key]) for key in batch.x_dict.keys()}# TODO: this applies various transformations to the single node types, not sure if this is desirable.
+            batch.x_dict = {key: self.post_layer(batch.x_dict[key]) for key in batch.x_dict.keys() if batch.x_dict[key] is not None}# TODO: this applies various transformations to the single node types, not sure if this is desirable.
             if self.has_l2norm:
                 batch.x_dict = {key: F.normalize(batch.x_dict[key], p=2, dim=-1) for key in batch.x_dict.keys()}
-
+        elif not isinstance(batch, Tensor) and cfg.gnn.layer_type == 'heatconv':
+            raise NotImplementedError
+            # batch = self.layer(batch.x, batch.edge_index, batch.node_type, batch.edge_type)
         elif cfg.gnn.graph_type == 'homo':
             batch = self.layer(batch)
             if isinstance(batch, torch.Tensor):

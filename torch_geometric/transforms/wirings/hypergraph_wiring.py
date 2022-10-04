@@ -48,10 +48,12 @@ class HypergraphWiring(WiringTransform):
 
         if "upper" in self.adjacency_types:
             for d in range(het_data.dim):
-                metapaths.append([(f"{d}_cell","boundary_of",f"{d+1}_cell"),(f"{d+1}_cell","coboundary_of",f"{d}_cell")])
+                if [(f"{d}_cell","boundary_of",f"{d+1}_cell"),(f"{d+1}_cell","coboundary_of",f"{d}_cell")] not in metapaths:
+                    metapaths.append([(f"{d}_cell","boundary_of",f"{d+1}_cell"),(f"{d+1}_cell","coboundary_of",f"{d}_cell")])
         if "lower" in self.adjacency_types:
             for d in range(het_data.dim):
-                metapaths.append([(f"{d+1}_cell", "coboundary_of", f"{d}_cell"), (f"{d}_cell", "boundary_of", f"{d + 1}_cell")])
+                if [(f"{d+1}_cell", "coboundary_of", f"{d}_cell"), (f"{d}_cell", "boundary_of", f"{d + 1}_cell")] not in metapaths:
+                    metapaths.append([(f"{d+1}_cell", "coboundary_of", f"{d}_cell"), (f"{d}_cell", "boundary_of", f"{d + 1}_cell")])
 
         het_data = AddMetaPathsHops(metapaths,
                                     drop_orig_edges=False,
@@ -67,6 +69,6 @@ class HypergraphWiring(WiringTransform):
             het_data[i].edge_index = torch.vstack([row, col])
 
         het_data.x_dict = {het_data.node_types[i]: het_data.node_stores[i]._Cochain__x for i in range(len(het_data.node_types)) if hasattr(het_data.node_stores[i], "_Cochain__x")}
-        # het_data.edge_index_dict = {het_data.edge_types[i]: het_data.edge_stores[i].edge_index for i in range(len(het_data.edge_types))}
+        het_data.edge_index_dict = {het_data.edge_types[i]: het_data.edge_stores[i].edge_index for i in range(len(het_data.edge_types))}
 
         return het_data

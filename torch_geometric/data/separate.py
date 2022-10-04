@@ -1,6 +1,7 @@
 from collections.abc import Mapping, Sequence
 from typing import Any
 
+import torch
 from torch import Tensor
 from torch_sparse import SparseTensor
 
@@ -39,9 +40,12 @@ def separate(cls, batch: BaseData, idx: int, slice_dict: Any,
 
         # The `num_nodes` attribute needs special treatment, as we cannot infer
         # the real number of nodes from the total number of nodes alone:
-        if hasattr(batch_store, '_num_nodes'):
-            data_store.num_nodes = batch_store._num_nodes[idx]
 
+        if hasattr(batch_store, '_num_nodes'):
+            slice_not_nan_indices = torch.logical_not(slices.isnan()).nonzero(as_tuple=False)
+            slice_index_map = lambda x: (slice_not_nan_indices == x).nonzero(as_tuple=False).squeeze()[0]
+            if not slices[idx].isnan(): # then we know that the slice is not empty for this attribute
+                data_store.num_nodes = batch_store._num_nodes[slice_index_map(idx)] # get the right index by computing the non-nan values of slice
     return data
 
 
@@ -61,12 +65,32 @@ def _separate(
         # NOTE: We need to take care of decrementing elements appropriately.
         key = str(key)
         cat_dim = batch.__cat_dim__(key, value, store)
-        start, end = int(slices[idx]), int(slices[idx + 1])
+
+        if isinstance(slices, Tensor):
+            if slices[idx].isnan():
+                UserWarning("Entirely nan slice index.")
+                return None
+            else:
+                start = int(slices[idx])
+                if slices[idx + 1].isnan():
+                    min_indx = (slices>slices[idx]).nonzero()[0]
+                    end = int(slices[min_indx])
+                else:
+                    end = int(slices[idx + 1])
+
+        else:
+            start = int(slices[idx])
+            end = int(slices[idx + 1])
+
+
         # TODO: introduced this, because edge_index tensors are concatenated along the other axis:
         try:
-            value = value.narrow(cat_dim or 0, start, end - start)
+            value = value.narrow(0, start, end - start)
         except:
-            value = value.narrow(cat_dim or 1, start, end - start)
+            try:
+                value = value.narrow(1, start, end - start)
+            except:
+                  raise Exception("Could not narrow tensor along axis 0 or 1")
         value = value.squeeze(0) if cat_dim is None else value
         if decrement and (incs.dim() > 1 or int(incs[idx]) != 0):
             value = value - incs[idx].to(value.device)

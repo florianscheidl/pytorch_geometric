@@ -2,19 +2,20 @@
 out_dir: results
 dataset:
   format: PyG
-  name: TU_MUTAG # for TUDatasets, the right format is TU_{name}, e.g. TU_MUTAG
+  name: TU_PROTEINS # for TUDatasets, the right format is TU_{name}, e.g. TU_MUTAG, TU_PTC_FM, TU_PROTEINS,
   task: graph
   task_type: classification
   transductive: false
   split: [0.8, 0.1, 0.1] # for graph tasks, the split is loader (create_loader()).
-  transform: lift_and_wire # none
+  pre_transform: "lift_and_wire"
+  transform: None # none
 lift:
   data_model: cell_complex # alternatively: simplicial_complex
   init_edges: True
   init_rings: True
   init_method: sum
   method: rings
-  max_induced_cycle_length: 8
+  max_induced_cycle_length: 5
 wiring:
   adjacency_types: ["boundary","upper"]
 train:
@@ -31,7 +32,7 @@ gnn:
   layers_mp: 2
   layers_post_mp: 1
   dim_inner: 64 # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
-  layer_type: hanconv # requires graph_type == hetero
+  layer_type: hanconv # hanconv # requires graph_type == hetero
   stage_type: stack
   batchnorm: false
   act: prelu #
@@ -41,4 +42,4 @@ gnn:
 optim:
   optimizer: adam
   base_lr: 0.01
-  max_epoch: 400
+  max_epoch: 200
