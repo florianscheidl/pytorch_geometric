@@ -2,7 +2,7 @@
 out_dir: results
 dataset:
   format: PyG
-  name: TU_PROTEINS # for TUDatasets, the right format is TU_{name}, e.g. TU_MUTAG, TU_PTC_FM, TU_PROTEINS,
+  name: TU_ENZYMES # for TUDatasets, the right format is TU_{name}, e.g. TU_MUTAG, TU_PTC_FM, TU_PROTEINS,
   task: graph
   task_type: classification
   transductive: false

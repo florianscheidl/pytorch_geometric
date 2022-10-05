@@ -42,6 +42,8 @@ def separate(cls, batch: BaseData, idx: int, slice_dict: Any,
         # the real number of nodes from the total number of nodes alone:
 
         if hasattr(batch_store, '_num_nodes'):
+            if isinstance(slices, list):
+                slices = torch.tensor(slices)
             slice_not_nan_indices = torch.logical_not(slices.isnan()).nonzero(as_tuple=False)
             slice_index_map = lambda x: (slice_not_nan_indices == x).nonzero(as_tuple=False).squeeze()[0]
             if not slices[idx].isnan(): # then we know that the slice is not empty for this attribute

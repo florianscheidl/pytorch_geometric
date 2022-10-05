@@ -14,7 +14,7 @@ from torch_geometric.data.storage import BaseStorage, NodeStorage, EdgeStorage
 def collate(
     cls,
     data_list: List[BaseData],
-    increment: bool = False, # TODO: changed default from True to False
+    increment: bool = True, # TODO: changed default from True to False
     add_batch: bool = True,
     follow_batch: Optional[Union[List[str]]] = None,
     exclude_keys: Optional[Union[List[str]]] = None,
@@ -35,8 +35,11 @@ def collate(
         out = cls()
 
     # Create empty stores:
-    max_data_len = max(len(data.stores) for data in data_list)
-    max_data_store = [data for data in data_list if len(data.stores) == max_data_len][0]
+    max_store_lengths = max([[len(store) for store in data.stores] for data in data_list])
+    for data in data_list:
+        if all([max_store_lengths[k] == len(store) for k, store in enumerate(data.stores)]):
+            max_data_store = data
+            break
     max_data_store_keys = [store._key for store in max_data_store.stores]
     out.stores_as(max_data_store)
 
@@ -46,10 +49,10 @@ def collate(
     # Group all storage objects of every data object in the `data_list` by key,
     # i.e. `key_to_store_list = { key: [store_1, store_2, ...], ... }`:
     key_to_stores = defaultdict(list)
-    # for data in data_list:
-    #     for store in data.stores:
-    #         key_to_stores[store._key].append(store)
-    missing_data_stores_dict, key_to_stores = compute_missing_data_stores(data_list, max_data_store, max_data_store_keys, key_to_stores)
+    for data in data_list:
+        for store in data.stores:
+            key_to_stores[store._key].append(store)
+    missing_data_stores_dict = compute_missing_data_stores(data_list, max_data_store, max_data_store_keys)
 
     # if isinstance(data.stores[0], BaseStorage):
         #     key_to_stores[None].append(data.stores[0])
@@ -86,16 +89,26 @@ def collate(
     for i, out_store in enumerate(out.stores):
         key = out_store._key
         stores = key_to_stores[key]
+
+        # here we need to distinguish between dict and list -> I think we should completely replace this with a recursive function..
+        # if isinstance(stores, dict):
+        #     for key in stores.keys():
+
+
+
         missing_store_indices = missing_data_stores_dict[key]
         stores_with_attributes = [store for store in stores if store is not None and len(store)>0]
 
-        if isinstance(missing_store_indices, list):
-            assert(len([store for store in stores_with_attributes])+len(missing_store_indices)==len(data_list))
-        if len(stores_with_attributes)>0:
+        # if isinstance(missing_store_indices, list):
+        #     # this is the wrong thing to assert -> should be recursive do to the nested nature of the problem
+        #     assert(len([store for store in stores_with_attributes])+len(missing_store_indices)==len(data_list))
+
+        if len(stores_with_attributes)>0: # -> again, we should go through the attributes recursively (we do not reach all of them right now)
             for attr in stores_with_attributes[0].keys():
 
                 if attr in exclude_keys:  # Do not include top-level attribute.
                     continue
+                values = [getattr(store, attr) if store is not None and hasattr(store, attr) else None for store in stores]
                 values = [getattr(store, attr) if store is not None and hasattr(store, attr) else None for store in stores]
 
                 # The `num_nodes` attribute needs special treatment, as we need to
@@ -112,7 +125,7 @@ def collate(
                 # Collate attributes into a unified representation:
                 value, slices, incs = _collate(attr, values, data_list, stores,
                                                increment)
-                if isinstance(missing_store_indices, dict):
+                if attr in missing_store_indices: # not 100% sure if this is sufficient
                     slices = slice_correction(slices, missing_store_indices[attr], data_list)
                 else:
                     slices = slice_correction(slices, missing_store_indices, data_list)
@@ -151,8 +164,8 @@ def collate(
                     out_store.batch_dict = {}
                     for i in range(len(max_data_store.node_types)):
                         out_store.batch_dict[max_data_store.node_types[i]] = repeat_interleave(
-                            [data_list[j].node_stores[i].num_nodes if (len(data_list[j].node_stores)>i and data_list[j].node_stores[i].num_nodes is not None) else 0 for j in range(len(data_list))])
-                    # out_store.batch_dict = {max_data_store.node_types[i]: repeat_interleave([data_list[j].node_stores[i].num_nodes if len(data_list[j].node_stores)>i else 0 for j in range(len(data_list))]) for i in range(len(max_data_store.node_types))}
+                            [data_list[j].node_stores[i]._mapping['_Cochain__x'].size()[0] if len(data_list[j].node_stores)>i and len(data_list[j].node_stores[i])>0 else 0 for j in range(len(data_list))])
+                        #out_store.batch_dict[max_data_store.node_types[i]] = repeat_interleave([data_list[j].node_stores[i]._mapping['_Cochain__x'].size()[0] for j in range(len(data_list)) if len(data_list[j].node_stores)>i and len(data_list[j].node_stores[i])>0])
                 except:
                     raise Exception("Batching error for heterogeneous graph. Please check the data_list.")
 
@@ -191,7 +204,7 @@ def _collate(
             if incs.dim() > 1 or int(incs[-1]) != 0:
                 values = [
                     value + inc.to(value.device)
-                    for value, inc in zip([value for value in values if value is not None], incs) if value is not None
+                    for value, inc in zip([value for value in values if value is not None], incs)
                 ] # TODO: added if value is not None
         else:
             incs = None
@@ -220,32 +233,6 @@ def _collate(
                 value = torch.cat([value for value in values if value is not None], dim=1, out=out)
         else:
             value = torch.cat([value for value in values if value is not None], dim=1, out=out)
-
-        # if isinstance(min_size_initial,tuple):
-        #     min_size = min_size_initial[1]
-        #     value = torch.cat(
-        #         [value if value is not None else torch.full((1, min_size), torch.nan) for value in values],
-        #         dim=0, out=out)
-        #     value = torch.cat([value for value in values if value is not None],dim=0, out=out)
-        # else:
-        #     min_size = min_size_initial
-        #     try:
-        #         value = torch.vstack(
-        #         [value.squeeze() if value is not None else torch.full((1, min_size), torch.nan).squeeze() for value in values], out=out)
-        #     except:
-        #         try:
-        #             value = torch.cat(
-        #                 [value if value is not None else torch.full(
-        #                     (1, min_size), torch.nan).squeeze() for value in values],
-        #                 dim=0, out=out)
-        #         except:
-        #             try:
-        #                 value = torch.cat(
-        #                     [value if value is not None else torch.full(
-        #                         (2, min_size), torch.nan).squeeze() for value in values],
-        #                     dim=1, out=out)
-        #             except:
-        #                 raise Exception("Batching error. Please check the data_list.")
 
         return value, slices, incs
 
@@ -370,7 +357,7 @@ def get_incs(key, values: List[Any], data_list: List[BaseData],
     repeats = [
         data.__inc__(key, value, store)
         for value, data, store in zip(values, data_list, stores) if value is not None
-    ] # TODO: added if value is not None
+    ] # TODO: added if value is not None and data is not None
     if isinstance(repeats[0], Tensor):
         repeats = torch.stack(repeats, dim=0)
     else:
@@ -385,40 +372,42 @@ def slice_correction(slices, missing_store_indices, data_list):
         return slices
 
     elif isinstance(slices, Tensor):
-        new_slices = []
-        it = 0
-        for j in range(len(data_list) + 1):
-            new_slices.append(slices[it]) if j not in missing_store_indices else new_slices.append(torch.nan)
-            it += 1 if j not in missing_store_indices else 0
-        new_slices = torch.tensor(new_slices)
+        if slices.size()[0]+len(missing_store_indices)!=len(data_list)+1:
+            UserWarning("Slices were computed incorrectly due to missing values. Setting slices to None.")
+            new_slices = [torch.nan for i in range(len(data_list)+1)]
+        else:
+            new_slices = []
+            it = 0
+            for j in range(len(data_list)+1):
+                new_slices.append(slices[it]) if j not in missing_store_indices else new_slices.append(torch.nan)
+                it += 1 if j not in missing_store_indices else 0
+            new_slices = torch.tensor(new_slices)
         return new_slices
 
-def compute_missing_data_stores(data_list, max_data_store, max_data_store_keys, key_to_stores):
-
+def compute_missing_data_stores(data_list, max_data_store, max_data_store_keys):
     missing_data_stores_dict = dict()
-    missing_data_stores_dict[None] = dict()
     for j, data in enumerate(data_list):
-        for store in data.stores:
-            key_to_stores[store._key].append(store)
-            if store._key is not None and store._key not in missing_data_stores_dict:
-                missing_data_stores_dict[store._key] = []
-        diff = set(max_data_store_keys) - set([store._key for store in data.stores if (len(store._mapping)>0)])
-        for k in diff:
-            if k not in missing_data_stores_dict:
-                missing_data_stores_dict[k] = []
-            missing_data_stores_dict[k].append(j)
-
-    # recursively go through the None store
-        for none_store_key in data.stores[0].keys():
-            if isinstance(data.stores[0][none_store_key], dict):
-                if none_store_key not in missing_data_stores_dict[None]:
-                    missing_data_stores_dict[None][none_store_key] = dict()
-                for inner_store_key in max_data_store.stores[0][none_store_key].keys():
-                    if inner_store_key not in missing_data_stores_dict[None][none_store_key]:
-                        missing_data_stores_dict[None][none_store_key][inner_store_key] = []
-                    if inner_store_key not in data.stores[0][none_store_key].keys() or data.stores[0][none_store_key][inner_store_key] is None or len(data.stores[0][none_store_key][inner_store_key]) == 0:
-                            missing_data_stores_dict[None][none_store_key][inner_store_key].append(j)
+        for store in max_data_store.stores:
+            if store._key not in [data_store._key for data_store in data.stores]:
+                missing_data_stores_dict[store._key] = compute_single_missing_data_store(None, j, store, missing_data_stores_dict, in_key=store._key)
             else:
-                missing_data_stores_dict[None][none_store_key] = []
+                indx = [data_store._key for data_store in data.stores].index(store._key)
+                missing_data_stores_dict[store._key] = compute_single_missing_data_store(data.stores[indx], j, store, missing_data_stores_dict, in_key=store._key)
+    return missing_data_stores_dict
 
-    return missing_data_stores_dict, key_to_stores
+def compute_single_missing_data_store(data_store, j, max_data_store_value, missing_data_stores_dict, in_key=None):
+    if isinstance(max_data_store_value, dict) or isinstance(max_data_store_value, BaseStorage):
+        if not in_key in missing_data_stores_dict:
+            missing_data_stores_dict[in_key] = dict()
+        for key, value in max_data_store_value.items():
+            if data_store is not None and key in data_store:
+                missing_data_stores_dict[in_key][key] = compute_single_missing_data_store(data_store[key], j, value, missing_data_stores_dict[in_key], key)
+            else:
+                missing_data_stores_dict[in_key][key] = compute_single_missing_data_store(None, j, value, missing_data_stores_dict[in_key], key)
+        return missing_data_stores_dict[in_key]
+    else:
+        if in_key not in missing_data_stores_dict:
+            missing_data_stores_dict[in_key] = []
+        if data_store is None:
+            missing_data_stores_dict[in_key].append(j)
+        return missing_data_stores_dict[in_key]

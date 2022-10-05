@@ -37,6 +37,7 @@ def type_wise_hetero_pooling(batch, size=None):
 
 @register_pooling('hetero_add_pooling')
 def type_wise_hetero_pooling(batch, size=None):
+    # the batch_dict does not work for 1-cells (in some cases), also num_nodes is sometimes incorrectly inferred for 1-cells.
     cell_dim_wise_scatter = {key: scatter(batch.x_dict[key], batch.batch_dict[key], dim=0, reduce='add') for key in batch.x_dict.keys() if batch.x_dict[key] is not None}
     out = []
     for i in range(len(batch)):

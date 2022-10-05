@@ -54,7 +54,14 @@ if __name__ == '__main__':
     datamodule = GraphGymDataModule() # how does this know which config to use?
 
     # This is usually hidden in the GraphGymDataModule, but I need the dataset metadata for hanconv, so I'm loading it here too...
-    transformed_dataset = lift_wire_transform_formatter(name=cfg.dataset.name, dataset_dir=cfg.dataset.dir+"_", pre_transform=cfg.dataset.transform) # attention: here we pretransform with the transform to obtain the metadata.
+    if cfg.dataset.transform is not None:
+        transformed_dataset = lift_wire_transform_formatter(name=cfg.dataset.name,
+                                                            dataset_dir=cfg.dataset.dir+"metadata_information",
+                                                            pre_transform=cfg.dataset.transform) # attention: here we pretransform with the transform to obtain the metadata.
+    else:
+        transformed_dataset = lift_wire_transform_formatter(name=cfg.dataset.name,
+                                                            dataset_dir=cfg.dataset.dir+"metadata_information",
+                                                            pre_transform=cfg.dataset.pre_transform)
     cfg.dataset.metadata = transformed_dataset.data.metadata()
 
     model = create_model() # how does this know which config to use?
@@ -63,6 +70,8 @@ if __name__ == '__main__':
         wandb.init(config=cfg)
     logging.info(model)
     logging.info(cfg)
-    cfg.params = params_count(model)
+    dummy_batch = transformed_dataset.data
+    model(dummy_batch)
+    cfg.params = params_count(model)  # -> would need to initialize lazy modules.
     logging.info('Num parameters: %s', cfg.params)
     wandb_train.train(model, datamodule, logger=True, use_wandb=use_wandb)
