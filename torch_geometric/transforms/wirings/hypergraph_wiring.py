@@ -23,8 +23,9 @@ class HypergraphWiring(WiringTransform):
         het_data = HeteroData()
 
         # Map the Complex to a HeteroData object:
-        het_data.y = data.y
-        het_data.dim = data.dimension
+        for key in data.keys:
+            setattr(het_data, key, data[key])
+
 
         # Add higher-order vertices (HoVs) and their features:
         for chain in data.cochains:
@@ -33,7 +34,7 @@ class HypergraphWiring(WiringTransform):
                     het_data[f"{data.cochains[chain].dim}_cell"].num_nodes = data.cochains[chain].num_cells
 
                     # Add higher-order edges (HoEs)
-        for d in range(het_data.dim):
+        for d in range(het_data.dimension):
             if "boundary" not in self.adjacency_types:
                 raise Exception("Require boundary adjacency.")
             else:
@@ -47,11 +48,11 @@ class HypergraphWiring(WiringTransform):
         metapaths = []
 
         if "upper" in self.adjacency_types:
-            for d in range(het_data.dim):
+            for d in range(het_data.dimension):
                 if [(f"{d}_cell","boundary_of",f"{d+1}_cell"),(f"{d+1}_cell","coboundary_of",f"{d}_cell")] not in metapaths:
                     metapaths.append([(f"{d}_cell","boundary_of",f"{d+1}_cell"),(f"{d+1}_cell","coboundary_of",f"{d}_cell")])
         if "lower" in self.adjacency_types:
-            for d in range(het_data.dim):
+            for d in range(het_data.dimension):
                 if [(f"{d+1}_cell", "coboundary_of", f"{d}_cell"), (f"{d}_cell", "boundary_of", f"{d + 1}_cell")] not in metapaths:
                     metapaths.append([(f"{d+1}_cell", "coboundary_of", f"{d}_cell"), (f"{d}_cell", "boundary_of", f"{d + 1}_cell")])
 

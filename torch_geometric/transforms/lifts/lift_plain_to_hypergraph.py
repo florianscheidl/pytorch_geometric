@@ -117,7 +117,8 @@ class LiftGraphToCellComplex(LiftTransform):
             return lifted_data
 
         elif self.lift_method == "rings":
-            self.boundary_adjacency_tensors, lifted_data = compute_ring_2complex(x=data.x,
+            self.boundary_adjacency_tensors, lifted_data = compute_ring_2complex(data=data,
+                                                                                 x=data.x,
                                                                                  y=data.y,
                                                                                  edge_index=data.edge_index,
                                                                                  edge_attr=data.edge_attr,
@@ -590,7 +591,8 @@ def extract_boundaries_and_coboundaries_with_rings(simplex_tree, id_maps):
     return boundary_adjacency_tensors, boundaries_tables, boundaries, coboundaries
 
 
-def compute_ring_2complex(x: Union[Tensor, np.ndarray], edge_index: Union[Tensor, np.ndarray],
+def compute_ring_2complex(data: Data,
+                          x: Union[Tensor, np.ndarray], edge_index: Union[Tensor, np.ndarray],
                           edge_attr: Optional[Union[Tensor, np.ndarray]],
                           size: int, y: Optional[Union[Tensor, np.ndarray]] = None,
                           max_simple_cycle_length: Optional[int] = 3,
@@ -696,8 +698,12 @@ def compute_ring_2complex(x: Union[Tensor, np.ndarray], edge_index: Union[Tensor
         cochain = generate_cochain(i, xs[i], upper_idx, lower_idx, shared_boundaries, shared_coboundaries,
                                    cell_tables, boundaries_tables, complex_dim=complex_dim, y=y)
         cochains.append(cochain)
+    complex = Complex(*cochains, y=complex_y, dimension=complex_dim)
+    for key in data.keys:
+        complex.keys.append(key)
+        setattr(complex, key, data[key])
 
-    return boundary_adjacency_tensors, Complex(*cochains, y=complex_y, dimension=complex_dim)
+    return boundary_adjacency_tensors, complex
 
 
 def convert_graph_dataset_with_rings(dataset, max_ring_size=7, include_down_adj=False,
@@ -714,7 +720,7 @@ def convert_graph_dataset_with_rings(dataset, max_ring_size=7, include_down_adj=
     # Process the dataset in parallel
     parallel = ProgressParallel(n_jobs=n_jobs, use_tqdm=True, total=len(dataset))
     # It is important we supply a numpy array here. tensors seem to slow joblib down significantly.
-    complexes = parallel(delayed(compute_ring_2complex)(
+    complexes = parallel(delayed(compute_ring_2complex)(data,
         maybe_convert_to_numpy(data.x), maybe_convert_to_numpy(data.edge_index),
         maybe_convert_to_numpy(data.edge_attr),
         data.num_nodes, y=maybe_convert_to_numpy(data.y), max_k=max_ring_size,

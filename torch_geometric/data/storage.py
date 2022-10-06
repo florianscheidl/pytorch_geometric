@@ -260,7 +260,7 @@ class NodeStorage(BaseStorage):
             return False
 
     @property
-    def num_nodes(self) -> Optional[int]:
+    def num_nodes(self) -> Optional[int]: #TODO:infer storage from the '_cochain__x' attribute
         # We sequentially access attributes that reveal the number of nodes.
         if 'num_nodes' in self:
             return self['num_nodes']

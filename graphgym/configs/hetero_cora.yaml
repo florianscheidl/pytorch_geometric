@@ -22,6 +22,8 @@ train:
   batch_size: 16
   eval_period: 50 # what does this mean?
   ckpt_period: 100 # what does this mean?
+  iter_per_epoch: 96 # what does this mean?
+  node_per_graph: 96
 model:
   type: gnn
   loss_fun: cross_entropy # mse

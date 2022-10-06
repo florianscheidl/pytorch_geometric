@@ -64,6 +64,9 @@ def set_cfg_lift_wire(cfg):
     cfg.gnn.layers_pre_mp = 0 # due to how we transform the data, pre_mp is not applicable.
     cfg.gnn.layers_mp = 3
     cfg.gnn.layers_post_mp = 1
+
+    if cfg.dataset.task == "node" and cfg.gnn.graph_type=='hetero':
+        cfg.gnn.head = 'hetero_node_head'
     # For post_mp, we first do graph_readout and then potentially apply post_mp.
     # Looks like this can be reactivated again:
     # cfg.gnn.batchnorm = False # run into heterograph problems otherwise
@@ -75,4 +78,9 @@ def set_cfg_lift_wire(cfg):
     cfg.gnn.heat_edge_dim = 1
     cfg.gnn.heat_edge_attr_emb_dim = 1
 
-    # for ...
+    # for heteroconv -> this is quite general, so setting up the config could be lengthy
+    cfg.gnn.heteroconv_dict = None # in here you need to specify the entire module dictionary - basta
+    cfg.gnn.heteroconv_node_to_edge = None
+    cfg.gnn.heteroconv_edge_to_node = None
+    cfg.gnn.heteroconv_edge_to_cell = None
+    cfg.gnn.heteroconv_cell_to_edge = None

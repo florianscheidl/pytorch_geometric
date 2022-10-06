@@ -162,6 +162,7 @@ class Planetoid(InMemoryDataset):
             data.val_mask = torch.stack(val_masks, dim=1)
             data.test_mask = torch.stack(test_masks, dim=1)
 
+        # original_data = data
         data = data if self.pre_transform is None else self.pre_transform(data)
         torch.save(self.collate([data]), self.processed_paths[0])
 

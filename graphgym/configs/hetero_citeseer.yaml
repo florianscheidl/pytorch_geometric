@@ -2,7 +2,7 @@
 out_dir: results
 dataset:
   format: PyG
-  name: Cora # for TUDatasets, the right format is TU_{name}, e.g. TU_MUTAG, TU_PTC_FM, TU_PROTEINS,
+  name: CiteSeer # for TUDatasets, the right format is TU_{name}, e.g. TU_MUTAG, TU_PTC_FM, TU_PROTEINS,
   task: node
   task_type: classification
   transductive: true # since we are doing node!
@@ -19,9 +19,11 @@ lift:
 wiring:
   adjacency_types: ["boundary","upper"]
 train:
-  batch_size: 16
+  batch_size: 8
   eval_period: 50 # what does this mean?
   ckpt_period: 100 # what does this mean?
+  iter_per_epoch: 96 # hyperparameter
+  node_per_graph: 96 # hyperparameter
 model:
   type: gnn
   loss_fun: cross_entropy # mse
@@ -33,10 +35,10 @@ gnn:
   layers_post_mp: 1
   dim_inner: 16 # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
   layer_type: hanconv # hanconv # requires graph_type == hetero
-  stage_type: stack
+  stage_type: stack # skipconcat
   batchnorm: false # hyperparameter search
   act: prelu # hyperparameter search
-  dropout: 0.2 # Hyperparameter search
+  dropout: 0.4 # Hyperparameter search
   agg: add # type_specific_aggregation: at the moment, aggregations ignore types and other information!
   normalize_adj: false # not sure if applicable
 optim:
