@@ -290,7 +290,6 @@ class HeteroData(BaseData, FeatureStore, GraphStore):
             return int(value.max()) + 1
         elif isinstance(store, EdgeStorage) and 'index' in key:
             try:
-                # inc_size = torch.tensor(store.size()).view(2, 1)
                 inc_size = torch.tensor([store['edge_index'][0].unique().size(), store['edge_index'][1].unique().size()])
             except:
                 raise Exception('The number of nodes is not being inferred correctly.')

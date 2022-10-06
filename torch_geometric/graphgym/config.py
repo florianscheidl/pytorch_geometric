@@ -123,7 +123,7 @@ def set_cfg(cfg):
     cfg.dataset.dir = './datasets'
 
     # Task: node, edge, graph, link_pred
-    cfg.dataset.task = 'node'
+    cfg.dataset.task = None
 
     # Type of task: classification, regression, classification_binary
     # classification_multi

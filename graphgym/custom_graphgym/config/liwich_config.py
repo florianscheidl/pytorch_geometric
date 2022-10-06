@@ -67,6 +67,7 @@ def set_cfg_lift_wire(cfg):
 
     if cfg.dataset.task == "node" and cfg.gnn.graph_type=='hetero':
         cfg.gnn.head = 'hetero_node_head'
+
     # For post_mp, we first do graph_readout and then potentially apply post_mp.
     # Looks like this can be reactivated again:
     # cfg.gnn.batchnorm = False # run into heterograph problems otherwise

@@ -1,10 +1,12 @@
 import copy
 from dataclasses import dataclass, replace
 from typing import Optional
+import math
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.nn.parameter import Parameter
 from torch import Tensor
 
 import torch_geometric as pyg
@@ -16,10 +18,14 @@ from torch_geometric.graphgym.contrib.layer.generalconv import (
     GeneralEdgeConvLayer,
 )
 from torch_geometric.graphgym.register import register_layer
-from torch_geometric.nn import Linear as Linear_pyg
+from torch_geometric.nn import Linear as Linear_pyg, inits
 from torch_geometric.nn.dense import HeteroLinear
 from torch_geometric.typing import Metadata
-
+try:
+    from pyg_lib.ops import segment_matmul  # noqa
+    _WITH_PYG_LIB = True
+except ImportError:
+    _WITH_PYG_LIB = False
 
 @dataclass
 class LayerConfig:
@@ -48,9 +54,10 @@ class LayerConfig:
 
     # other parameters.
     keep_edge: float = 0.5
+    graph_type: str = 'homo'
 
 
-def new_layer_config(dim_in, dim_out, num_layers, has_act, has_bias, cfg):
+def new_layer_config(dim_in, dim_out, num_layers, has_act, has_bias, cfg, graph_type: Optional[str] = 'homo'):
     return LayerConfig(
         has_batchnorm=cfg.gnn.batchnorm,
         bn_eps=cfg.bn.eps,
@@ -68,6 +75,7 @@ def new_layer_config(dim_in, dim_out, num_layers, has_act, has_bias, cfg):
         keep_edge=cfg.gnn.keep_edge,
         dim_inner=cfg.gnn.dim_inner,
         num_layers=num_layers,
+        graph_type=graph_type
     )
 
 
@@ -88,8 +96,8 @@ class GeneralLayer(nn.Module):
     def __init__(self, name, layer_config: LayerConfig, **kwargs):
         super().__init__()
         self.has_l2norm = layer_config.has_l2norm
-        has_bn = layer_config.has_batchnorm
-        layer_config.has_bias = not has_bn
+        self.has_bn = layer_config.has_batchnorm
+        layer_config.has_bias = not self.has_bn
 
         # TODO: this was added to accomodate methods that require metadata and out_channels
         if name in ['hanconv','hgtconv']:
@@ -108,7 +116,7 @@ class GeneralLayer(nn.Module):
         else:
             self.layer = register.layer_dict[name](layer_config, **kwargs)
         layer_wrapper = []
-        if has_bn:
+        if self.has_bn and cfg.gnn.graph_type!='hetero':
             layer_wrapper.append(
                 nn.BatchNorm1d(layer_config.dim_out, eps=layer_config.bn_eps,
                                momentum=layer_config.bn_mom))
@@ -122,12 +130,15 @@ class GeneralLayer(nn.Module):
 
     def forward(self, batch):
         if not isinstance(batch, Tensor) and cfg.gnn.layer_type in ['hanconv', 'hgtconv']:
-            edge_index_dict = {batch.edge_types[i]: batch.edge_stores[i]["edge_index"] for i in range(len(batch.edge_types)) if "edge_index" in batch.edge_stores[i]} # TODO: this might be (super) inefficient -> more importantly, it is wrong.
-            batch.x_dict = {key: batch.x_dict[key] for key in batch.x_dict.keys() if isinstance(batch.x_dict[key], Tensor)}
-            batch.x_dict = self.layer(x_dict=batch.x_dict, edge_index_dict=edge_index_dict)  # TODO: is this sufficient?
-            batch.x_dict = {key: self.post_layer(batch.x_dict[key]) for key in batch.x_dict.keys() if batch.x_dict[key] is not None}# TODO: this applies various transformations to the single node types, not sure if this is desirable.
-            if self.has_l2norm:
+            if not hasattr(batch, 'edge_index_dict') or len(batch.edge_index_dict)==0:
+                batch.edge_index_dict = {batch.edge_types[i]: batch.edge_stores[i]["edge_index"] for i in range(len(batch.edge_types)) if "edge_index" in batch.edge_stores[i]} # TODO: this might be (super) inefficient -> more importantly, it is wrong.
+            if not hasattr(batch, 'x_dict') or len(batch.x_dict)==0:
+                batch.x_dict = {batch.node_types[i]: batch.node_stores[i]["_Cochain__x"] for i in range(len(batch.node_types)) if "_Cochain__x" in batch.node_stores[i]}
+            batch = self.layer(batch)  # TODO: is this sufficient?
+            if self.has_bn: # do batch normalisation "by hand" for hetero graphs
                 batch.x_dict = {key: F.normalize(batch.x_dict[key], p=2, dim=-1) for key in batch.x_dict.keys()}
+            batch.x_dict = {key: self.post_layer(batch.x_dict[key]) for key in batch.x_dict.keys() if batch.x_dict[key] is not None}# TODO: this applies various transformations to the single node types, not sure if this is desirable.
+
         elif not isinstance(batch, Tensor) and cfg.gnn.layer_type == 'heatconv':
             raise NotImplementedError
             # batch = self.layer(batch.x, batch.edge_index, batch.node_type, batch.edge_type)
@@ -199,13 +210,118 @@ class Linear(nn.Module):
         super().__init__()
         self.model = Linear_pyg(layer_config.dim_in, layer_config.dim_out,
                                 bias=layer_config.has_bias)
+        self.layer_config = layer_config
 
     def forward(self, batch):
-        if isinstance(batch, torch.Tensor):
-            batch = self.model(batch)
+        if self.layer_config.graph_type=='hetero':
+            batch.x_dict = {key: self.model(batch.x_dict[key]) for key in batch.x_dict.keys()}
         else:
-             batch.x = self.model(batch.x)
+            if isinstance(batch, torch.Tensor):
+                batch = self.model(batch)
+            else:
+                 batch.x = self.model(batch.x)
         return batch
+
+@register_layer('heterolinear')
+class HeteroLinear(torch.nn.Module):
+    r"""Applies separate linear tranformations to the incoming data according
+    to types
+
+    .. math::
+        \mathbf{x}^{\prime}_{\kappa} = \mathbf{x}_{\kappa}
+        \mathbf{W}^{\top}_{\kappa} + \mathbf{b}_{\kappa}
+
+    for type :math:`\kappa`.
+    It supports lazy initialization and customizable weight and bias
+    initialization.
+
+    Args:
+        in_channels (int): Size of each input sample. Will be initialized
+            lazily in case it is given as :obj:`-1`.
+        out_channels (int): Size of each output sample.
+        num_types (int): The number of types.
+        is_sorted (bool, optional): If set to :obj:`True`, assumes that
+            :obj:`type_vec` is sorted. This avoids internal re-sorting of the
+            data and can improve runtime and memory efficiency.
+            (default: :obj:`False`)
+        **kwargs (optional): Additional arguments of
+            :class:`torch_geometric.nn.Linear`.
+
+    Shapes:
+        - **input:**
+          features :math:`(*, F_{in})`,
+          type vector :math:`(*)`
+        - **output:** features :math:`(*, F_{out})`
+    """
+    def __init__(self, in_channels: int, out_channels: int, num_types: int = 3,
+                 is_sorted: bool = False, **kwargs): # todo: num_types should be inferred from the data
+        super().__init__()
+
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.num_types = num_types
+        self.is_sorted = is_sorted
+        self.kwargs = kwargs
+
+        self._WITH_PYG_LIB = torch.cuda.is_available() and _WITH_PYG_LIB
+
+        if self._WITH_PYG_LIB:
+            self.weight = torch.nn.Parameter(
+                torch.Tensor(num_types, in_channels, out_channels))
+            if kwargs.get('bias', True):
+                self.bias = Parameter(torch.Tensor(num_types, out_channels))
+            else:
+                self.register_parameter('bias', None)
+        else:
+            self.lins = torch.nn.ModuleList([
+                Linear(in_channels, out_channels, **kwargs)
+                for _ in range(num_types)
+            ])
+            self.register_parameter('weight', None)
+            self.register_parameter('bias', None)
+
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        if self._WITH_PYG_LIB:
+            reset_weight_(self.weight, self.in_channels,
+                          self.kwargs.get('weight_initializer', None))
+            reset_weight_(self.bias, self.in_channels,
+                          self.kwargs.get('bias_initializer', None))
+        else:
+            for lin in self.lins:
+                lin.reset_parameters()
+
+    def forward(self, x: Tensor, type_vec: Tensor) -> Tensor:
+        r"""
+        Args:
+            x (Tensor): The input features.
+            type_vec (LongTensor): A vector that maps each entry to a type.
+        """
+        if self._WITH_PYG_LIB:
+            assert self.weight is not None
+
+            if not self.is_sorted:
+                if (type_vec[1:] < type_vec[:-1]).any():
+                    type_vec, perm = type_vec.sort()
+                    x = x[perm]
+
+            type_vec_ptr = torch.ops.torch_sparse.ind2ptr(
+                type_vec, self.num_types)
+            out = segment_matmul(x, type_vec_ptr, self.weight)
+            if self.bias is not None:
+                out += self.bias[type_vec]
+        else:
+            out = x.new_empty(x.size(0), self.out_channels)
+            for i, lin in enumerate(self.lins):
+                mask = type_vec == i
+                out[mask] = lin(x[mask])
+        return out
+
+    def __repr__(self) -> str:
+        return (f'{self.__class__.__name__}({self.in_channels}, '
+                f'{self.out_channels}, num_types={self.num_types}, '
+                f'bias={self.kwargs.get("bias", True)})')
 
 
 class BatchNorm1dNode(nn.Module):
@@ -246,7 +362,7 @@ class BatchNorm1dEdge(nn.Module):
 class MLP(nn.Module):
     """
     Basic MLP model.
-    Here 1-layer MLP is equivalent to a Liner layer.
+    Here 1-layer MLP is equivalent to a LineAr layer.
 
     Args:
         dim_in (int): Input dimension
@@ -268,23 +384,10 @@ class MLP(nn.Module):
                 num_layers=layer_config.num_layers - 1,
                 dim_in=layer_config.dim_in, dim_out=dim_inner,
                 dim_inner=dim_inner, final_act=True)
-            # if cfg.gnn.graph_type=="hetero":
-            #     layers.append(GeneralMultiLayer('heterolinear', sub_layer_config, **kwargs))
-            # else:
-            layers.append(GeneralMultiLayer('linear', sub_layer_config))
+            layers.append(GeneralMultiLayer('linear', sub_layer_config)) # toDO: potentially make adjustments in "Linear"
             layer_config = replace(layer_config, dim_in=dim_inner)
-            # if cfg.gnn.graph_type=="hetero":
-            #     layers.append(HeteroLinear(in_channels=1,
-            #                                out_channels=1,
-            #                                num_types=1))
-            # else:
             layers.append(Linear(layer_config))
         else:
-            # if cfg.gnn.graph_type=="hetero":
-            #     layers.append(HeteroLinear(in_channels=1,
-            #                                out_channels=1,
-            #                                num_types=1))
-            # else:
             layers.append(Linear(layer_config))
         self.model = nn.Sequential(*layers)
 
@@ -422,3 +525,22 @@ class GeneralSampleEdgeConv(nn.Module):
         edge_feature = batch.edge_attr[edge_mask, :]
         batch.x = self.model(batch.x, edge_index, edge_feature=edge_feature)
         return batch
+
+# additional functions
+def reset_weight_(weight: Tensor, in_channels: int,
+                  initializer: Optional[str] = None) -> Tensor:
+    if in_channels <= 0:
+        pass
+    elif initializer == 'glorot':
+        inits.glorot(weight)
+    elif initializer == 'uniform':
+        bound = 1.0 / math.sqrt(in_channels)
+        torch.nn.init.uniform_(weight.data, -bound, bound)
+    elif initializer == 'kaiming_uniform':
+        inits.kaiming_uniform(weight, fan=in_channels, a=math.sqrt(5))
+    elif initializer is None:
+        inits.kaiming_uniform(weight, fan=in_channels, a=math.sqrt(5))
+    else:
+        raise RuntimeError(f"Weight initializer '{initializer}' not supported")
+
+    return weight

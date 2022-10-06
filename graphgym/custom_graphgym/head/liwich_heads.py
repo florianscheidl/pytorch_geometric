@@ -23,7 +23,7 @@ class GNNHeteroNodeHead(nn.Module):
     def _apply_index(self, batch):
         mask = '{}_mask'.format(batch.split)
         try:
-            batch_y = batch['0_cell']['y']
+            batch_y = batch.y
         except:
             Exception('Problem with finding y values of the batch.')
         return batch.x_dict['0_cell'][batch[mask]], batch_y[batch[mask]]

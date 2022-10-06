@@ -69,7 +69,7 @@ class HypergraphWiring(WiringTransform):
             row, col = het_data[i].edge_index.storage._row, het_data[i].edge_index.storage._col
             het_data[i].edge_index = torch.vstack([row, col])
 
-        het_data.x_dict = {het_data.node_types[i]: het_data.node_stores[i]._Cochain__x for i in range(len(het_data.node_types)) if hasattr(het_data.node_stores[i], "_Cochain__x")}
-        het_data.edge_index_dict = {het_data.edge_types[i]: het_data.edge_stores[i].edge_index for i in range(len(het_data.edge_types))}
+        # het_data.x_dict = {het_data.node_types[i]: het_data.node_stores[i]._Cochain__x for i in range(len(het_data.node_types)) if hasattr(het_data.node_stores[i], "_Cochain__x")}
+        # het_data.edge_index_dict = {het_data.edge_types[i]: het_data[het_data.edge_types[i]].edge_index for i in range(len(het_data.edge_types))} # changed het_data.edge_stores[i].edge_index to het_data[i].edge_index
 
         return het_data

@@ -10,6 +10,7 @@ from torch.nn import Parameter, Embedding, Module
 import torch.nn.functional as F
 from torch_sparse import SparseTensor
 
+from torch_geometric.data import Batch
 from torch_geometric.graphgym.config import cfg
 from torch_geometric.graphgym.register import register_layer
 from torch_geometric.nn.dense import Linear, HeteroLinear
@@ -152,10 +153,10 @@ class HANConv(MessagePassing):
         self.k_lin.reset_parameters()
         glorot(self.q)
 
-    def forward(
-        self, x_dict: Dict[NodeType, Tensor],
-        edge_index_dict: Dict[EdgeType,
-                              Adj]) -> Dict[NodeType, Optional[Tensor]]:
+    def forward(self, batch)-> Dict[NodeType, Optional[Tensor]]:
+                #x_dict: Dict[NodeType, Tensor],
+                #edge_index_dict: Dict[EdgeType,Adj]) \
+
         r"""
         Args:
             x_dict (Dict[str, Tensor]): A dictionary holding input node
@@ -171,6 +172,9 @@ class HANConv(MessagePassing):
             In case a node type does not receive any message, its output will
             be set to :obj:`None`.
         """
+        x_dict = batch.x_dict
+        edge_index_dict = batch.edge_index_dict
+
         H, D = self.heads, self.out_channels // self.heads
         x_node_dict, out_dict = {}, {}
 
@@ -206,7 +210,8 @@ class HANConv(MessagePassing):
                 continue
             out_dict[node_type] = out
 
-        return out_dict
+        batch.x_dict = out_dict
+        return batch
 
     @staticmethod
     def group(xs: List[Tensor], q: nn.Parameter,
@@ -322,12 +327,11 @@ class HGTConv(MessagePassing):
         glorot(self.a_rel)
         glorot(self.m_rel)
 
-    def forward(
-        self,
-        x_dict: Dict[NodeType, Tensor],
-        edge_index_dict: Union[Dict[EdgeType, Tensor],
-                               Dict[EdgeType, SparseTensor]]  # Support both.
-    ) -> Dict[NodeType, Optional[Tensor]]:
+    def forward(self,
+                batch: Batch,)-> Dict[NodeType, Optional[Tensor]]:
+        #x_dict: Dict[NodeType, Tensor],
+        #edge_index_dict: Union[Dict[EdgeType, Tensor],Dict[EdgeType, SparseTensor]]  # Support both.
+
         r"""
         Args:
             x_dict (Dict[str, Tensor]): A dictionary holding input node
@@ -343,6 +347,7 @@ class HGTConv(MessagePassing):
             In case a node type does not receive any message, its output will
             be set to :obj:`None`.
         """
+
 
         H, D = self.heads, self.out_channels // self.heads
 
@@ -385,7 +390,8 @@ class HGTConv(MessagePassing):
                 out = alpha * out + (1 - alpha) * x_dict[node_type]
             out_dict[node_type] = out
 
-        return out_dict
+        batch.x_dict = out_dict
+        return batch
 
     def message(self, k_j: Tensor, q_i: Tensor, v_j: Tensor, rel: Tensor,
                 index: Tensor, ptr: Optional[Tensor],

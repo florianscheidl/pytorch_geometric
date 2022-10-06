@@ -249,7 +249,7 @@ def set_dataset_info(dataset):
     # get dim_in and dim_out
     try:
         if cfg.gnn.graph_type=='hetero':
-            cfg.share.dim_in = list(dataset.data.x_dict.values())[0].size()[1]
+            cfg.share.dim_in = dataset.data.x.size()[1]
         else:
             cfg.share.dim_in = dataset.data.x.shape[1]
     except Exception:

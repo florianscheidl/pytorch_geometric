@@ -42,10 +42,25 @@ def GNNPreMP(dim_in, dim_out, num_layers):
         num_layers (int): Number of layers
 
     """
-    return GeneralMultiLayer(
-        'linear',
-        layer_config=new_layer_config(dim_in, dim_out, num_layers,
-                                      has_act=False, has_bias=False, cfg=cfg))
+    if cfg.gnn.graph_type=='hetero':
+        return GeneralMultiLayer('linear',
+                                 layer_config=new_layer_config(dim_in,
+                                                               dim_out,
+                                                               num_layers,
+                                                               has_act=False,
+                                                               has_bias=False,
+                                                               cfg=cfg,
+                                                               graph_type='hetero'
+                                                               )
+                                 )
+    else:
+        return GeneralMultiLayer('linear',
+                                 layer_config=new_layer_config(dim_in,
+                                                               dim_out,
+                                                               num_layers,
+                                                               has_act=False,
+                                                               has_bias=False,
+                                                               cfg=cfg))
 
 
 @register_stage('stack')
