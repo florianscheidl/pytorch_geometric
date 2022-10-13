@@ -1,0 +1,24 @@
+program: liwich_main.py
+command:
+  - ${env}
+  - ${interpreter}
+  - ${program}
+  - "--cfg"
+  - configs/hetero_mutag.yaml
+  - "use_wandb"
+  - True
+  - ${args_no_hyphens}
+method: random
+parameters:
+  seed:
+    values: [0, 1, 2]
+  gnn.dim_inner:
+    values: [8, 16, 128]
+  gnn.layer_type:
+    values: ['hanconv', 'hgtconv']
+  gnn.dropout:
+    values: [0.0, 0.2, 0.4]
+  lift.max_induced_cycle_length:
+    values: [3, 5, 9]
+  wiring.adjacency_types:
+    values: [['boundary', 'upper'], ['boundary', 'upper', 'lower']]
