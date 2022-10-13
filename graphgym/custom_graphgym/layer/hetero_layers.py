@@ -421,7 +421,7 @@ class HGTConv(MessagePassing):
             return out
 
 @register_layer('heatconv')
-class HEATConv(MessagePassing):
+class HEATConv(MessagePassing): # TODO: NOT INCORPORATED INTO THE MODEL YET
     r"""The heterogeneous edge-enhanced graph attentional operator from the
     `"Heterogeneous Edge-Enhanced Graph Attention Network For Multi-Agent
     Trajectory Prediction" <https://arxiv.org/abs/2106.07161>`_ paper, which
@@ -537,7 +537,8 @@ class HEATConv(MessagePassing):
             if self.root_weight:
                 out = out + x
 
-        return out
+        #return out
+        raise NotImplementedError
 
     def message(self, x_i: Tensor, x_j: Tensor, edge_type_emb: Tensor,
                 edge_attr: Tensor, index: Tensor, ptr: OptTensor,
@@ -556,7 +557,7 @@ class HEATConv(MessagePassing):
 
     def __repr__(self) -> str:
         return (f'{self.__class__.__name__}({self.in_channels}, '
-                f'{self.out_channels}, heads={self.heads})')
+                f'{self.out_channels}, heads={self.heads})') # n # not implemented!
 
 @register_layer('heteroconv')
 class HeteroConv(Module):
@@ -616,13 +617,15 @@ class HeteroConv(Module):
         for conv in self.convs.values():
             conv.reset_parameters()
 
-    def forward(
-        self,
-        x_dict: Dict[NodeType, Tensor],
-        edge_index_dict: Dict[EdgeType, Adj],
-        *args_dict,
-        **kwargs_dict,
-    ) -> Dict[NodeType, Tensor]:
+    def forward(self,
+                batch: Batch,
+                *args_dict,
+                **kwargs_dict,
+                ) -> Dict[NodeType, Tensor]:
+
+        # x_dict: Dict[NodeType, Tensor],
+        # edge_index_dict: Dict[EdgeType, Adj],
+
         r"""
         Args:
             x_dict (Dict[str, Tensor]): A dictionary holding node feature
@@ -641,6 +644,10 @@ class HeteroConv(Module):
                 :meth:`~torch_geometric.nn.conv.HeteroConv.forward` via
                 :obj:`edge_attr_dict = { edge_type: edge_attr }`.
         """
+
+        x_dict = batch.x_dict
+        edge_index_dict = batch.edge_index_dict
+
         out_dict = defaultdict(list)
         for edge_type, edge_index in edge_index_dict.items():
             src, rel, dst = edge_type
@@ -672,18 +679,35 @@ class HeteroConv(Module):
 
             conv = self.convs[str_edge_type]
 
-            if src == dst:
-                out = conv(x_dict[src], edge_index, *args, **kwargs)
-            else:
-                out = conv((x_dict[src], x_dict[dst]), edge_index, *args,
-                           **kwargs)
+            # BIG TODO: I might be misunderstanding, but why is the src==dst condition here? Why not just pass the src node features?
+            # BIG TODO: Does this have to do with directed vs undirected graphs?
 
-            out_dict[dst].append(out)
+            local_batch = Batch()
+            # local_batch.x = x_dict[src]
+            # local_batch.edge_index = edge_index
+            # out = conv(batch=local_batch, *args, **kwargs)
+
+            if src == dst:
+                local_batch.x = x_dict[src]
+                local_batch.edge_index = edge_index
+                out = conv(local_batch, *args, **kwargs)
+                # out = conv(x=x_dict[src], edge_index=edge_index, *args,**kwargs)
+            else:
+                # local_batch.x = [x_dict[src], x_dict[dst]]
+                # local_batch.x = torch.cat([x_dict[src], x_dict[dst]], dim=0)
+                local_batch.x = (x_dict[src], x_dict[dst])
+                local_batch.edge_index = edge_index
+                out = conv(batch=local_batch, *args, **kwargs)
+                # print('hey')
+                # out = conv(x=(x_dict[src], x_dict[dst]), edge_index=edge_index, *args,**kwargs)
+            out_dict[dst].append(out.x)
 
         for key, value in out_dict.items():
             out_dict[key] = group(value, self.aggr)
 
-        return out_dict
+        batch.x_dict = out_dict
+        return batch
+
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}(num_relations={len(self.convs)})'

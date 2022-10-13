@@ -113,6 +113,14 @@ class GeneralLayer(nn.Module):
                                                    edge_dim=cfg.gnn.heat_edge_dim,
                                                    edge_attr_emb_dim=cfg.gnn.heat_edge_attr_emb_dim,
                                                    **kwargs)
+        elif name=='heteroconv':
+            heteroconv_dict = dict()
+            for edge_type in cfg.dataset.metadata[1]:
+                src_type = edge_type[0]
+                dst_type = edge_type[2]
+                name = f'_{src_type}_{dst_type}'
+                heteroconv_dict[edge_type] = register.layer_dict[cfg.gnn.heteroconv[name]](layer_config,**kwargs)
+            self.layer = register.layer_dict['heteroconv'](heteroconv_dict)
         else:
             self.layer = register.layer_dict[name](layer_config, **kwargs)
         layer_wrapper = []
@@ -129,6 +137,7 @@ class GeneralLayer(nn.Module):
         self.post_layer = nn.Sequential(*layer_wrapper)
 
     def forward(self, batch):
+
         if not isinstance(batch, Tensor) and cfg.gnn.layer_type in ['hanconv', 'hgtconv']:
             if not hasattr(batch, 'edge_index_dict') or len(batch.edge_index_dict)==0:
                 batch.edge_index_dict = {batch.edge_types[i]: batch.edge_stores[i]["edge_index"] for i in range(len(batch.edge_types)) if "edge_index" in batch.edge_stores[i]} # TODO: this might be (super) inefficient -> more importantly, it is wrong.
@@ -138,6 +147,20 @@ class GeneralLayer(nn.Module):
             if self.has_bn: # do batch normalisation "by hand" for hetero graphs
                 batch.x_dict = {key: F.normalize(batch.x_dict[key], p=2, dim=-1) for key in batch.x_dict.keys()}
             batch.x_dict = {key: self.post_layer(batch.x_dict[key]) for key in batch.x_dict.keys() if batch.x_dict[key] is not None}# TODO: this applies various transformations to the single node types, not sure if this is desirable.
+
+        if not isinstance(batch, Tensor) and cfg.gnn.layer_type=='heteroconv':
+            if not hasattr(batch, 'edge_index_dict') or len(batch.edge_index_dict) == 0:
+                batch.edge_index_dict = {batch.edge_types[i]: batch.edge_stores[i]["edge_index"] for i in
+                                         range(len(batch.edge_types)) if "edge_index" in batch.edge_stores[
+                                             i]}  # TODO: this might be (super) inefficient -> more importantly, it is wrong.
+            if not hasattr(batch, 'x_dict') or len(batch.x_dict) == 0:
+                batch.x_dict = {batch.node_types[i]: batch.node_stores[i]["_Cochain__x"] for i in
+                                range(len(batch.node_types)) if "_Cochain__x" in batch.node_stores[i]}
+            batch = self.layer(batch)  # TODO: is this sufficient?
+            if self.has_bn:  # do batch normalisation "by hand" for hetero graphs
+                batch.x_dict = {key: F.normalize(batch.x_dict[key], p=2, dim=-1) for key in batch.x_dict.keys()}
+            batch.x_dict = {key: self.post_layer(batch.x_dict[key]) for key in batch.x_dict.keys() if batch.x_dict[
+                key] is not None}  # TODO: this applies various transformations to the single node types, not sure if this is desirable.
 
         elif not isinstance(batch, Tensor) and cfg.gnn.layer_type == 'heatconv':
             raise NotImplementedError
@@ -410,7 +433,7 @@ class GCNConv(nn.Module):
                                     bias=layer_config.has_bias)
 
     def forward(self, batch):
-        batch.x = self.model(batch.x, batch.edge_index)
+        batch.x = self.model(x=batch.x, edge_index=batch.edge_index)
         return batch
 
 

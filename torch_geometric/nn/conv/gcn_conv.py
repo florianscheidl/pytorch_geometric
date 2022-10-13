@@ -172,9 +172,17 @@ class GCNConv(MessagePassing):
             if isinstance(edge_index, Tensor):
                 cache = self._cached_edge_index
                 if cache is None:
-                    edge_index, edge_weight = gcn_norm(  # yapf: disable
-                        edge_index, edge_weight, x.size(self.node_dim),
-                        self.improved, self.add_self_loops, self.flow, x.dtype)
+                    try:
+                        edge_index, edge_weight = gcn_norm(  # yapf: disable
+                            edge_index, edge_weight, x.size(self.node_dim),
+                            self.improved, self.add_self_loops, self.flow, x.dtype)
+                    except:
+                        edge_index, edge_weight = gcn_norm(  # yapf: disable
+                            edge_index=edge_index,
+                            edge_weight=edge_weight,
+                            improved=self.improved,
+                            add_self_loops=self.add_self_loops,
+                            flow=self.flow)
                     if self.cached:
                         self._cached_edge_index = (edge_index, edge_weight)
                 else:

@@ -32,21 +32,27 @@ gnn:
   layers_mp: 3 # hyperparameter search
   layers_post_mp: 1 # hyperparameter search
   dim_inner: 8 # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
-  layer_type: hanconv # hanconv, hgtconv # requires graph_type == hetero
+  layer_type: heteroconv # hanconv/hgtconv/heteroconv, requires graph_type == hetero.
+  # In case heteroconv is selected, the heteroconv config needs to be specified for any combination of node-types.
+
+  # The layers must be registered in layer.py or custom_graphgym.layer files. Moreover, the layers must support bipartite message-passing (see https://pytorch-geometric.readthedocs.io/en/latest/notes/cheatsheet.html).
+  # Currently, this supports (among others): ginconv, gatconv, sageconv, splineconv
+  # TODO: where to add extra arguments, e.g. number of attention heads for gatconv?
+  heteroconv:
+    _0_cell_0_cell: 'ginconv'
+    _0_cell_1_cell: 'ginconv' # sageconv
+    _1_cell_0_cell: 'ginconv'
+    _1_cell_1_cell: 'gatconv'
+    _1_cell_2_cell: 'gatconv'
+    _2_cell_1_cell: 'gatconv'
+    _2_cell_2_cell: 'gatconv'
+
   stage_type: skipconcat
   batchnorm: true # currently not supported, must be set to false
   act: prelu # hyperparameter search
   dropout: 0.2 # Hyperparameter search
   agg: add # type_specific_aggregation: at the moment, aggregations ignore types and other information!
   normalize_adj: false # not sure if applicable
-  heteroconv:
-    _0_cell_0_cell: 'gatconv'
-    _0_cell_1_cell: 'gatconv'
-    _1_cell_0_cell: 'gatconv'
-    _1_cell_1_cell: 'gatconv'
-    _1_cell_2_cell: 'gatconv'
-    _2_cell_1_cell: 'gatconv'
-    _2_cell_2_cell: 'gatconv'
 optim:
   optimizer: adam
   base_lr: 0.05

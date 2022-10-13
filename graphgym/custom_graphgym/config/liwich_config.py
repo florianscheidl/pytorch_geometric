@@ -80,8 +80,11 @@ def set_cfg_lift_wire(cfg):
     cfg.gnn.heat_edge_attr_emb_dim = 1
 
     # for heteroconv -> this is quite general, so setting up the config could be lengthy
-    cfg.gnn.heteroconv_dict = None # in here you need to specify the entire module dictionary - basta
-    cfg.gnn.heteroconv_node_to_edge = None
-    cfg.gnn.heteroconv_edge_to_node = None
-    cfg.gnn.heteroconv_edge_to_cell = None
-    cfg.gnn.heteroconv_cell_to_edge = None
+    cfg.gnn.heteroconv = CN()
+    cfg.gnn.heteroconv._0_cell_0_cell = 'gcnconv'
+    cfg.gnn.heteroconv._0_cell_1_cell = 'gcnconv'
+    cfg.gnn.heteroconv._1_cell_0_cell = 'gcnconv'
+    cfg.gnn.heteroconv._1_cell_1_cell = 'gcnconv'
+    cfg.gnn.heteroconv._1_cell_2_cell = 'gcnconv'
+    cfg.gnn.heteroconv._2_cell_1_cell = 'gcnconv'
+    cfg.gnn.heteroconv._2_cell_2_cell = 'gcnconv'
