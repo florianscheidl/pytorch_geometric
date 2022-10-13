@@ -36,10 +36,10 @@ gnn:
   # In case heteroconv is selected, the heteroconv config needs to be specified for any combination of node-types.
 
   # The layers must be registered in layer.py or custom_graphgym.layer files. Moreover, the layers must support bipartite message-passing (see https://pytorch-geometric.readthedocs.io/en/latest/notes/cheatsheet.html).
-  # Currently, this supports (among others): ginconv, gatconv, sageconv, splineconv
+  # Currently, this supports (among others): ginconv, gatconv, sageconv, splineconv (requires edge attributes)
   # TODO: where to add extra arguments, e.g. number of attention heads for gatconv?
   heteroconv:
-    _0_cell_0_cell: 'ginconv'
+    _0_cell_0_cell: 'sageconv'
     _0_cell_1_cell: 'ginconv' # sageconv
     _1_cell_0_cell: 'ginconv'
     _1_cell_1_cell: 'gatconv'
