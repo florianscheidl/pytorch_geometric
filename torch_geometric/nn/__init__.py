@@ -13,6 +13,7 @@ from .unpool import *  # noqa
 from .dense import *  # noqa
 from .models import *  # noqa
 from .functional import *  # noqa
+from .module_dict import ModuleDict
 
 __all__ = [
     'MetaLayer',
@@ -21,4 +22,5 @@ __all__ = [
     'DataParallel',
     'to_hetero',
     'to_hetero_with_bases',
+    'ModuleDict'
 ]

@@ -1,4 +1,7 @@
 import logging
+import sys
+import os
+sys.path.append(os.getcwd())
 
 import custom_graphgym  # noqa, register custom modules
 import torch

@@ -17,7 +17,7 @@ from torch_geometric.nn.dense import Linear, HeteroLinear
 from torch_geometric.nn.conv import MessagePassing
 from torch_geometric.nn.conv.hgt_conv import group
 from torch_geometric.nn.inits import glorot, zeros, reset, ones
-from torch_geometric.nn.module_dict import ModuleDict
+from torch_geometric.nn import ModuleDict
 from torch_geometric.typing import Adj, EdgeType, Metadata, NodeType, OptTensor
 from torch_geometric.utils import softmax
 from torch_geometric.utils.hetero import check_add_self_loops
