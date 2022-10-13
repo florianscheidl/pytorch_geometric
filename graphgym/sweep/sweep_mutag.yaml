@@ -21,4 +21,4 @@ parameters:
   lift.max_induced_cycle_length:
     values: [3, 5, 9]
   wiring.adjacency_types:
-    values: [['boundary', 'upper'], ['boundary', 'upper', 'lower']]
+    values: ['boundary,upper', 'boundary,upper,lower']
