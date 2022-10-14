@@ -77,4 +77,4 @@ if __name__ == '__main__':
     model(dummy_batch) # lazy initialisation, sometimes this seems to be necessary, not always though
     cfg.params = params_count(model)  # -> would need to initialize lazy modules.
     logging.info('Num parameters: %s', cfg.params)
-    wandb_train.tracuin(model, datamodule, logger=True, use_wandb=use_wandb)
+    wandb_train.train(model, datamodule, logger=True, use_wandb=use_wandb)
