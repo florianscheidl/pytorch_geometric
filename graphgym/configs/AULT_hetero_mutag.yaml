@@ -1,6 +1,7 @@
 # The recommended basic settings for GNN
 out_dir: results
 accelerator: 'cuda'
+devices: 1
 use_wandb: True
 dataset:
   format: PyG
