@@ -1,24 +1,27 @@
-program: liwich_main.py
+program: graphgym/liwich_main.py
 command:
-  - ${env}
   - ${interpreter}
   - ${program}
   - "--cfg"
-  - configs/hetero_mutag.yaml
-  - "use_wandb"
-  - True
+  - "graphgym/configs/hetero_mutag.yaml"
   - ${args_no_hyphens}
-method: random
+method: grid
 parameters:
   seed:
     values: [0, 1, 2]
-  gnn.dim_inner:
-    values: [8, 16, 128]
-  gnn.layer_type:
-    values: ['hanconv', 'hgtconv']
-  gnn.dropout:
-    values: [0.0, 0.2, 0.4]
   lift.max_induced_cycle_length:
-    values: [3, 5, 9]
-  wiring.adjacency_types:
-    values: ['boundary,upper', 'boundary,upper,lower']
+    values: [3,5]
+  gnn.layers_pre_mp:
+    value: 1
+  gnn.layers_mp:
+    value: 3 # hyperparameter search
+  gnn.layers_post_mp:
+    value: 1 # hyperparameter search
+  gnn.dim_inner:
+    values: [8,16,128] # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
+  gnn.layer_type:
+    values: ['hanconv', 'hgtconv'] # hanconv, hgtconv # requires graph_type == hetero
+  gnn.stage_type:
+    value: skipconcat
+  gnn.dropout:
+    values: ["0.0", "0.2"] # Hyperparameter search

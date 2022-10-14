@@ -1,5 +1,6 @@
 # The recommended basic settings for GNN
 out_dir: results
+use_wandb: True
 dataset:
   format: PyG
   name: TU_MUTAG # for TUDatasets, the right format is TU_{name}, e.g. TU_MUTAG, TU_PTC_FM, TU_PROTEINS,

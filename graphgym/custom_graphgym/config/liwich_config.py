@@ -25,7 +25,7 @@ def set_cfg_lift_wire(cfg):
     cfg.lift.data_model = "simplicial_complex"  # one of "simplicial_complex", "cell_complex
 
     cfg.lift.method = "inclusion"  # alternatively: clique_complex (for simplicial complex), or rings (for cell complex)
-    cfg.lift.init_method = "mean" # alternatively: "random" or "sum"
+    cfg.lift.init_method = "sum" # alternatively: "random" or "sum"
 
     # for simplicial_complex
     cfg.lift.max_clique_dim = 3
@@ -57,6 +57,7 @@ def set_cfg_lift_wire(cfg):
 
     cfg.dataset.pre_transform = "lift_wire"
     cfg.dataset.metadata = None
+    cfg.dataset.split = [0.8, 0.1, 0.1]
 
     cfg.gnn.graph_type = "hetero"
 
