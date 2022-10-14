@@ -3,7 +3,7 @@ command:
   - ${interpreter}
   - ${program}
   - "--cfg"
-  - "graphgym/configs/hetero_mutag.yaml"
+  - "graphgym/configs/AULT_hetero_mutag.yaml"
   - ${args_no_hyphens}
 method: grid
 parameters:
