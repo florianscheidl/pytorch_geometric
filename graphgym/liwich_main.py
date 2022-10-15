@@ -61,11 +61,12 @@ if __name__ == '__main__':
         transformed_dataset = lift_wire_transform_formatter(name=cfg.dataset.name,
                                                             dataset_dir=cfg.dataset.dir+"metadata_information",
                                                             pre_transform=cfg.dataset.transform) # attention: here we pretransform with the transform to obtain the metadata.
-    else:
+    elif cfg.dataset.pre_transform is not None:
         transformed_dataset = lift_wire_transform_formatter(name=cfg.dataset.name,
                                                             dataset_dir=cfg.dataset.dir,
                                                             pre_transform=cfg.dataset.pre_transform)
-    cfg.dataset.metadata = transformed_dataset.data.metadata()
+    if transformed_dataset is not None:
+        cfg.dataset.metadata = transformed_dataset.data.metadata()
 
     model = create_model() # how does this know which config to use?
     # Print model info
