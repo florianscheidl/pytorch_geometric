@@ -687,7 +687,7 @@ def compute_ring_2complex(data: Data,
             assert xs[1].size(0) == len(id_maps[1])
             assert xs[1].size(1) == edge_attr.size(1)
             if edge_attr.size(1) != x.size(1):
-                xs[1] = nn.Linear(edge_attr.size(1), x.size(1))(xs[1])
+                xs[1] = nn.Linear(edge_attr.size(1), x.size(1))(xs[1].float())
 
     # Initialise the node / complex labels
     v_y, complex_y = extract_labels(y, size)

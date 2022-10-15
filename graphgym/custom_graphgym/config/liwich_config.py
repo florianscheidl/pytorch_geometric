@@ -75,11 +75,6 @@ def set_cfg_lift_wire(cfg):
     # cfg.gnn.dropout = False
     # cfg.gnn.act =
 
-    # for heatconv
-    cfg.gnn.heat_edge_type_emb_dim = 16
-    cfg.gnn.heat_edge_dim = 1
-    cfg.gnn.heat_edge_attr_emb_dim = 1
-
     # for heteroconv -> this is quite general, so setting up the config could be lengthy
     cfg.gnn.heteroconv = CN()
     cfg.gnn.heteroconv._0_cell_0_cell = 'gcnconv'

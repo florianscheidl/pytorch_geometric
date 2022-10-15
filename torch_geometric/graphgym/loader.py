@@ -109,7 +109,7 @@ def set_dataset_attr(dataset, name, value, size):
         dataset.slices[name] = torch.tensor([0, size], dtype=torch.long)
 
 
-def load_ogb(name, dataset_dir):
+def load_ogb(name, dataset_dir, pre_transform=None, transform=None):
     r"""
 
     Load OGB dataset objects.
@@ -127,7 +127,7 @@ def load_ogb(name, dataset_dir):
     from ogb.nodeproppred import PygNodePropPredDataset
 
     if name[:4] == 'ogbn':
-        dataset = PygNodePropPredDataset(name=name, root=dataset_dir)
+        dataset = PygNodePropPredDataset(name=name, root=dataset_dir, pre_transform=pre_transform, transform=transform)
         splits = dataset.get_idx_split()
         split_names = ['train_mask', 'val_mask', 'test_mask']
         for i, key in enumerate(splits.keys()):
@@ -138,7 +138,7 @@ def load_ogb(name, dataset_dir):
                          edge_index.shape[1])
 
     elif name[:4] == 'ogbg':
-        dataset = PygGraphPropPredDataset(name=name, root=dataset_dir)
+        dataset = PygGraphPropPredDataset(name=name, root=dataset_dir, pre_transform=pre_transform, transform=transform)
         splits = dataset.get_idx_split()
         split_names = [
             'train_graph_index', 'val_graph_index', 'test_graph_index'
@@ -148,7 +148,7 @@ def load_ogb(name, dataset_dir):
             set_dataset_attr(dataset, split_names[i], id, len(id))
 
     elif name[:4] == "ogbl":
-        dataset = PygLinkPropPredDataset(name=name, root=dataset_dir)
+        dataset = PygLinkPropPredDataset(name=name, root=dataset_dir, pre_transform=pre_transform, transform=transform)
         splits = dataset.get_edge_split()
         id = splits['train']['edge'].T
         if cfg.dataset.resample_negative:
@@ -206,7 +206,10 @@ def load_dataset():
             dataset = load_pyg(name, dataset_dir, pre_transform=cfg.dataset.pre_transform, transform=cfg.dataset.transform)
     # Load from OGB formatted data
     elif format == 'OGB':
-        dataset = load_ogb(name.replace('_', '-'), dataset_dir)
+        if cfg.dataset.pre_transform == "lift_and_wire" or cfg.dataset.transform == "lift_and_wire":
+            return lift_wire_transform_formatter(name, dataset_dir, pre_transform=cfg.dataset.pre_transform, transform=cfg.dataset.transform)
+        else:
+            dataset = load_ogb(name.replace('_', '-'), dataset_dir)
     else:
         raise ValueError('Unknown data format: {}'.format(format))
     return dataset
@@ -235,7 +238,12 @@ def lift_wire_transform_formatter(name, dataset_dir, pre_transform=None, transfo
     transform = LiftAndWire(lift, wiring) if transform is not None else transform
     if pre_transform is not None and transform is not None:
         raise Exception("pre_transform and transform are both not None.")
-    return load_pyg(name, dataset_dir, pre_transform=pre_transform, transform=transform)
+    if cfg.dataset.format=="PyG":
+        return load_pyg(name, dataset_dir, pre_transform=pre_transform, transform=transform)
+    elif cfg.dataset.format=="OGB":
+        return load_ogb(name, dataset_dir, pre_transform=pre_transform, transform=transform)
+    else:
+        raise NotImplementedError
 
 def set_dataset_info(dataset):
     r"""
@@ -376,21 +384,23 @@ def create_loader():
         ]
 
     # val and test loaders
-    for i in range(len(cfg.dataset.split)-1): # TODO: I changed this to the length of dataset.split
-        if cfg.dataset.task == 'graph':
-            if hasattr(dataset.data, 'val_graph_index') and hasattr(dataset.data, 'test_graph_index'):
-                split_names = ['val_graph_index', 'test_graph_index']
+    if cfg.dataset.task == 'graph':
+        if hasattr(dataset.data, 'val_graph_index') and hasattr(dataset.data, 'test_graph_index'):
+            split_names = ['val_graph_index', 'test_graph_index']
+            for i in range(len(cfg.dataset.split)-1): # TODO: I changed this to the length of dataset.split
                 id = dataset.data[split_names[i]]
                 loaders.append(
                     get_loader(dataset[id], cfg.val.sampler, cfg.train.batch_size,
                                shuffle=False))
                 delattr(dataset.data, split_names[i])
-            else:
-                UserWarning('Custom loader: no val_graph_index or test_graph_index in dataset, use customised test/val split.')
-                loaders.append(
-                    get_loader(dataset[val_test_indices[i]], cfg.val.sampler, cfg.train.batch_size,
-                               shuffle=False))
         else:
+            UserWarning('Custom loader: no val_graph_index or test_graph_index in dataset, use customised test/val split.')
+            for i in range(len(cfg.dataset.split) - 1):  # TODO: I changed this to the length of dataset.split
+                loaders.append(
+                get_loader(dataset[val_test_indices[i]], cfg.val.sampler, cfg.train.batch_size,
+                           shuffle=False))
+    else:
+        for i in range(len(cfg.dataset.split) - 1):  # TODO: I changed this to the length of dataset.split
             loaders.append(
                 get_loader(dataset, cfg.val.sampler, cfg.train.batch_size,
                            shuffle=False))

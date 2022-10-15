@@ -347,7 +347,8 @@ class HGTConv(MessagePassing):
             In case a node type does not receive any message, its output will
             be set to :obj:`None`.
         """
-
+        x_dict = batch.x_dict
+        edge_index_dict = batch.edge_index_dict
 
         H, D = self.heads, self.out_channels // self.heads
 

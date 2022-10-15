@@ -2,16 +2,16 @@
 out_dir: results
 use_wandb: False
 dataset:
-  format: OGB # PyG, OGB
-  name: ogbn-products # for TUDatasets, the right format is TU_{name}, e.g. TU_MUTAG, TU_PTC_FM, TU_PROTEINS,
-  task: node
-  task_type: classification
-  transductive: true # since we are doing node!
+  format: PyG #**************************************# # PyG, OGB
+  name: Cora #**************************************# # for TUDatasets, the right format is TU_{name}, e.g. TU_MUTAG, TU_PTC_FM, TU_PROTEINS,
+  task: node #**************************************#
+  task_type: classification #**************************************#
+  transductive: true #**************************************#
   split: [0.8, 0.1, 0.1] # for graph tasks, the split is loader (create_loader()).
-  pre_transform: "lift_and_wire"
+  pre_transform: None #"lift_and_wire"
   transform: None # none
 lift:
-  data_model: cell_complex # alternatively: simplicial_complex
+  data_model: None # alternatively: simplicial_complex, cell_complex
   init_edges: True
   init_rings: True
   init_method: sum
@@ -26,28 +26,20 @@ train:
 model:
   type: gnn
   loss_fun: cross_entropy # mse
-  graph_pooling: hetero_add_pooling # type_readout
+  graph_pooling: add # hetero_add_pooling # type_readout
 gnn:
-  graph_type: "hetero"
+  graph_type: 'homo' #"hetero" #**************************************#
   layers_pre_mp: 1
   layers_mp: 3 # hyperparameter search
   layers_post_mp: 1 # hyperparameter search
   dim_inner: 8 # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
-  layer_type: hgtconv # hanconv, hgtconv # requires graph_type == hetero
+  layer_type: 'gcnconv' # hgtconv # hanconv, hgtconv # requires graph_type == hetero
   stage_type: skipconcat
   batchnorm: true # currently not supported, must be set to false
   act: prelu # hyperparameter search
   dropout: 0.2 # Hyperparameter search
   agg: add # type_specific_aggregation: at the moment, aggregations ignore types and other information!
   normalize_adj: false # not sure if applicable
-  heteroconv:
-    _0_cell_0_cell: 'gatconv'
-    _0_cell_1_cell: 'gatconv'
-    _1_cell_0_cell: 'gatconv'
-    _1_cell_1_cell: 'gatconv'
-    _1_cell_2_cell: 'gatconv'
-    _2_cell_1_cell: 'gatconv'
-    _2_cell_2_cell: 'gatconv'
 optim:
   optimizer: adam
   base_lr: 0.05
