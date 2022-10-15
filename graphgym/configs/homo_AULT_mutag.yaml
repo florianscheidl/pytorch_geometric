@@ -30,7 +30,7 @@ model:
 gnn:
   graph_type: 'homo' #"hetero" #**************************************#
   layers_pre_mp: 1
-  layers_mp: 3 # hyperparameter search
+  layers_mp: 2 # hyperparameter search
   layers_post_mp: 1 # hyperparameter search
   dim_inner: 8 # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
   layer_type: 'gcnconv' # hgtconv # hanconv, hgtconv # requires graph_type == hetero

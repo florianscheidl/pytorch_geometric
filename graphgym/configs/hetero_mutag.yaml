@@ -2,11 +2,11 @@
 out_dir: results
 use_wandb: False
 dataset:
-  format: OGB # PyG, OGB
-  name: ogbn-products # for TUDatasets, the right format is TU_{name}, e.g. TU_MUTAG, TU_PTC_FM, TU_PROTEINS,
-  task: node
+  format: PyG # PyG, OGB
+  name: TU_MUTAG # for TUDatasets, the right format is TU_{name}, e.g. TU_MUTAG, TU_PTC_FM, TU_PROTEINS,
+  task: graph
   task_type: classification
-  transductive: true # since we are doing node!
+  transductive: false # since we are doing node!
   split: [0.8, 0.1, 0.1] # for graph tasks, the split is loader (create_loader()).
   pre_transform: "lift_and_wire"
   transform: None # none

@@ -178,7 +178,13 @@ class Dataset(torch.utils.data.Dataset):
         self.download()
 
     def _process(self):
-        f = osp.join(self.processed_dir, 'pre_transform.pt')
+
+        if self.pre_transform is not None:
+            lift = self.pre_transform.lift
+            f = osp.join(self.processed_dir, f'{lift.lift_method}_{lift.max_induced_cycle_length}_{lift.max_simple_cycle_length}_pre_transform.pt')
+        else:
+            f = osp.join(self.processed_dir, 'pre_transform.pt')
+
         if osp.exists(f) and torch.load(f) != _repr(self.pre_transform):
             warnings.warn(
                 f"The `pre_transform` argument differs from the one used in "
@@ -186,7 +192,10 @@ class Dataset(torch.utils.data.Dataset):
                 f"make use of another pre-processing technique, make sure to "
                 f"delete '{self.processed_dir}' first")
 
-        f = osp.join(self.processed_dir, 'pre_filter.pt')
+        if self.pre_transform is not None:
+            f = osp.join(self.processed_dir,f'{lift.lift_method}_{lift.max_induced_cycle_length}_{lift.max_simple_cycle_length}_pre_filter.pt')
+        else:
+            f = osp.join(self.processed_dir, 'pre_filter.pt')
         if osp.exists(f) and torch.load(f) != _repr(self.pre_filter):
             warnings.warn(
                 "The `pre_filter` argument differs from the one used in "
@@ -202,10 +211,16 @@ class Dataset(torch.utils.data.Dataset):
         makedirs(self.processed_dir)
         self.process()
 
-        path = osp.join(self.processed_dir, 'pre_transform.pt')
-        torch.save(_repr(self.pre_transform), path)
-        path = osp.join(self.processed_dir, 'pre_filter.pt')
-        torch.save(_repr(self.pre_filter), path)
+        if self.pre_transform is not None:
+            path = osp.join(self.processed_dir, f'{lift.lift_method}_{lift.max_induced_cycle_length}_{lift.max_simple_cycle_length}_pre_transform.pt')
+            torch.save(_repr(self.pre_transform), path)
+            path = osp.join(self.processed_dir, f'{lift.lift_method}_{lift.max_induced_cycle_length}_{lift.max_simple_cycle_length}_pre_filter.pt')
+            torch.save(_repr(self.pre_filter), path)
+        else:
+            path = osp.join(self.processed_dir, 'pre_transform.pt')
+            torch.save(_repr(self.pre_transform), path)
+            path = osp.join(self.processed_dir, 'pre_filter.pt')
+            torch.save(_repr(self.pre_filter), path)
 
         print('Done!', file=sys.stderr)
 

@@ -176,7 +176,11 @@ class TUDataset(InMemoryDataset):
 
     @property
     def processed_file_names(self) -> str:
-        return 'data.pt'
+        if self.pre_transform is not None:
+            lift = self.pre_transform.lift
+            return f'{lift.lift_method}_{lift.max_induced_cycle_length}_{lift.max_simple_cycle_length}_data.pt'
+        else:
+            return 'data.pt'
 
     def download(self):
         url = self.cleaned_url if self.cleaned else self.url
