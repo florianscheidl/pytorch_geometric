@@ -56,6 +56,7 @@ if __name__ == '__main__':
     # Set machine learning pipeline
     datamodule = GraphGymDataModule() # how does this know which config to use?
 
+    transformed_dataset = None
     # This is usually hidden in the GraphGymDataModule, but I need the dataset metadata for hanconv, so I'm loading it here too...
     if cfg.dataset.transform is not None:
         transformed_dataset = lift_wire_transform_formatter(name=cfg.dataset.name,
