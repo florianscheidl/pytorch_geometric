@@ -74,10 +74,6 @@ parameters:
   lift.init_method:
     value: sum
 
-  ## wiring:
-  wiring.adjacency_types:
-    value: [ "boundary", "upper" ]
-
   ## choosing heterogeneous GRL architecture
   gnn.layer_type:
     values: [ 'hanconv', 'hgtconv' ] # hanconv, hgtconv # requires graph_type == hetero
