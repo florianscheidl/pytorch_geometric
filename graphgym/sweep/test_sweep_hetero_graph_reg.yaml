@@ -3,7 +3,7 @@ command:
   - ${interpreter}
   - ${program}
   - "--cfg"
-  - "graphgym/configs/hetero_AULT_mutag.yaml"
+  - "graphgym/configs/hetero_AULT_graph_regr.yaml"
   - "--repeat"
   - "1"
   - ${args_no_hyphens}
@@ -76,7 +76,7 @@ parameters:
 
   ## choosing heterogeneous GRL architecture
   gnn.layer_type:
-    values: [ 'hanconv', 'hgtconv' ] # hanconv, hgtconv # requires graph_type == hetero
+    value: 'heteroconv' # hanconv, hgtconv # requires graph_type == hetero
   # add more arguments in case of using heteroconv
 
   # Regularization

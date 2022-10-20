@@ -3,7 +3,7 @@ command:
   - ${interpreter}
   - ${program}
   - "--cfg"
-  - "graphgym/configs/hetero_AULT_mutag.yaml"
+  - "graphgym/configs/hetero_AULT_graph_class.yaml"
   - "--repeat"
   - "1"
   - ${args_no_hyphens}
