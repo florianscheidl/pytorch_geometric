@@ -71,9 +71,9 @@ if __name__ == '__main__':
         untransformed_dataset = load_dataset()
     if transformed_dataset is not None:
         cfg.dataset.metadata = transformed_dataset.data.metadata()
-        dummy_dataset = transformed_dataset[0:10]
+        dummy_dataset = transformed_dataset[0:min(2,len(transformed_dataset))]
     elif untransformed_dataset is not None:
-        dummy_dataset = untransformed_dataset[0:10]
+        dummy_dataset = untransformed_dataset[0:min(2,len(untransformed_dataset))]
     else:
         raise ValueError('Neither transformed nor untransformed dataset exist, logic error.')
 
@@ -87,8 +87,9 @@ if __name__ == '__main__':
     # if transformed_dataset is not None:
     #     dummy_batch = transformed_dataset.data.to(cfg.accelerator)
     #     model(dummy_batch) # lazy initialisation, sometimes this seems to be necessary, not always though
-    dummy_batch = dummy_dataset.data.to(cfg.accelerator)
-    model(dummy_batch)  # lazy initialisation, sometimes this seems to be necessary, not always though
+    if cfg.dataset.name in ['PROTEINS']:
+        dummy_batch = dummy_dataset.data.to(cfg.accelerator)
+        model(dummy_batch)  # lazy initialisation, sometimes this seems to be necessary, not always though
 
     cfg.params = params_count(model)  # -> would need to initialize lazy modules.
     logging.info('Num parameters: %s', cfg.params)
