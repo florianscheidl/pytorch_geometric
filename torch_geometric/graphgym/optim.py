@@ -64,9 +64,12 @@ def cos_scheduler(optimizer: Optimizer, max_epoch: int) -> CosineAnnealingLR:
     return CosineAnnealingLR(optimizer, T_max=max_epoch)
 
 
-def create_scheduler(optimizer: Optimizer, cfg: Any) -> Any:
+def create_scheduler(optimizer: Optimizer, cfg_optim: Any) -> Any:
     r"""Creates a config-driven learning rate scheduler."""
-    func = register.scheduler_dict.get(cfg.scheduler, None)
+    func = register.scheduler_dict.get(cfg_optim.scheduler, None)
     if func is not None:
-        return from_config(func)(optimizer, cfg=cfg)
-    raise ValueError(f"Scheduler '{cfg.scheduler}' not supported")
+        if hasattr(cfg_optim, 'monitor'):
+            return from_config(func)(optimizer, cfg=cfg_optim, monitor=cfg_optim.monitor)
+        else:
+            return from_config(func)(optimizer, cfg=cfg_optim)
+    raise ValueError(f"Scheduler '{cfg_optim.scheduler}' not supported")

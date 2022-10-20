@@ -481,6 +481,8 @@ def assert_cfg(cfg):
         cfg.gnn.head = cfg.dataset.task
     cfg.run_dir = cfg.out_dir
 
+    if cfg.optim.scheduler == 'plateau':
+        cfg.optim.monitor = cfg.model.loss_fun
 
 def dump_cfg(cfg):
     r"""
