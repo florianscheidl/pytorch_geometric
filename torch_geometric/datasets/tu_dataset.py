@@ -4,6 +4,7 @@ import shutil
 from typing import Callable, List, Optional
 
 import torch
+from tqdm import tqdm
 
 from torch_geometric.data import InMemoryDataset, download_url, extract_zip
 from torch_geometric.io import read_tu_data
@@ -201,7 +202,12 @@ class TUDataset(InMemoryDataset):
                 data_list = [d for d in data_list if self.pre_filter(d)]
 
             if self.pre_transform is not None:
-                data_list = [self.pre_transform(d) for d in data_list]
+                new_data_list = []
+                print("Applying pre-transform...")
+                for d in tqdm(data_list):
+                    new_data_list.append(self.pre_transform(d))
+                data_list = new_data_list
+                #data_list = [self.pre_transform(d) for d in data_list]
 
             self.data, self.slices = self.collate(data_list)
             self._data_list = None  # Reset cache.
