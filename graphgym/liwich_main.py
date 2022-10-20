@@ -66,27 +66,28 @@ if __name__ == '__main__':
     # if transformed_dataset is not None:
     #     dummy_batch = transformed_dataset.data.to(cfg.accelerator)
     #     model(dummy_batch) # lazy initialisation, sometimes this seems to be necessary, not always though
+
+    transformed_dataset = None
+    untransformed_dataset = None
+    # This is usually hidden in the GraphGymDataModule, but I need the dataset metadata for hanconv, so I'm loading it here too...
+    if cfg.dataset.transform is not None:
+        transformed_dataset = lift_wire_transform_formatter(name=cfg.dataset.name,
+                                                            dataset_dir=cfg.dataset.dir + "metadata_information",
+                                                            pre_transform=cfg.dataset.transform)  # attention: here we pretransform with the transform to obtain the metadata.
+    elif cfg.dataset.pre_transform is not None:
+        transformed_dataset = lift_wire_transform_formatter(name=cfg.dataset.name,
+                                                            dataset_dir=cfg.dataset.dir,
+                                                            pre_transform=cfg.dataset.pre_transform)
+    elif cfg.dataset.name in ['TU_PROTEINS', 'TU_QM9']:
+        untransformed_dataset = load_dataset()
+
+    if transformed_dataset is not None:
+        cfg.dataset.metadata = transformed_dataset.data.metadata()
+        dummy_dataset = transformed_dataset[0:min(2, len(transformed_dataset))]
+    elif untransformed_dataset is not None:
+        dummy_dataset = untransformed_dataset[0:min(2, len(untransformed_dataset))]
+
     if cfg.dataset.name in ['TU_PROTEINS', 'TU_QM9']:
-        transformed_dataset = None
-        untransformed_dataset = None
-        # This is usually hidden in the GraphGymDataModule, but I need the dataset metadata for hanconv, so I'm loading it here too...
-        if cfg.dataset.transform is not None:
-            transformed_dataset = lift_wire_transform_formatter(name=cfg.dataset.name,
-                                                                dataset_dir=cfg.dataset.dir + "metadata_information",
-                                                                pre_transform=cfg.dataset.transform)  # attention: here we pretransform with the transform to obtain the metadata.
-        elif cfg.dataset.pre_transform is not None:
-            transformed_dataset = lift_wire_transform_formatter(name=cfg.dataset.name,
-                                                                dataset_dir=cfg.dataset.dir,
-                                                                pre_transform=cfg.dataset.pre_transform)
-        else:
-            untransformed_dataset = load_dataset()
-        if transformed_dataset is not None:
-            cfg.dataset.metadata = transformed_dataset.data.metadata()
-            dummy_dataset = transformed_dataset[0:min(2, len(transformed_dataset))]
-        elif untransformed_dataset is not None:
-            dummy_dataset = untransformed_dataset[0:min(2, len(untransformed_dataset))]
-        else:
-            raise ValueError('Neither transformed nor untransformed dataset exist, logic error.')
         dummy_batch = dummy_dataset.data.to(cfg.accelerator)
         model(dummy_batch)  # lazy initialisation, sometimes this seems to be necessary, not always though
 
