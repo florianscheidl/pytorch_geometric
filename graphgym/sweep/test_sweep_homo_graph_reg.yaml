@@ -16,7 +16,7 @@ parameters:
 
   # dataset -> in the config file
   dataset.name:
-    values: [TU_ZINC_full, TU_Qm9]
+    value: TU_Qm9
   dataset.task:
     value: graph
   dataset.task_type:
