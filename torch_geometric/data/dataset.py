@@ -179,7 +179,7 @@ class Dataset(torch.utils.data.Dataset):
 
     def _process(self):
 
-        if self.pre_transform is not None:
+        if self.pre_transform is not None and hasattr(self.pre_transform,'lift'):
             lift = self.pre_transform.lift
             f = osp.join(self.processed_dir, f'{lift.lift_method}_{lift.max_induced_cycle_length}_{lift.max_simple_cycle_length}_pre_transform.pt')
         else:
@@ -192,7 +192,7 @@ class Dataset(torch.utils.data.Dataset):
                 f"make use of another pre-processing technique, make sure to "
                 f"delete '{self.processed_dir}' first")
 
-        if self.pre_transform is not None:
+        if self.pre_transform is not None and hasattr(self.pre_transform,'lift'):
             f = osp.join(self.processed_dir,f'{lift.lift_method}_{lift.max_induced_cycle_length}_{lift.max_simple_cycle_length}_pre_filter.pt')
         else:
             f = osp.join(self.processed_dir, 'pre_filter.pt')
@@ -211,7 +211,7 @@ class Dataset(torch.utils.data.Dataset):
         makedirs(self.processed_dir)
         self.process()
 
-        if self.pre_transform is not None:
+        if self.pre_transform is not None and hasattr(self.pre_transform,'lift'):
             path = osp.join(self.processed_dir, f'{lift.lift_method}_{lift.max_induced_cycle_length}_{lift.max_simple_cycle_length}_pre_transform.pt')
             torch.save(_repr(self.pre_transform), path)
             path = osp.join(self.processed_dir, f'{lift.lift_method}_{lift.max_induced_cycle_length}_{lift.max_simple_cycle_length}_pre_filter.pt')

@@ -16,7 +16,7 @@ parameters:
 
   # dataset -> in the config file
   dataset.name:
-    values: [TU_PTC_FM, TU_IMDB-MULTI] # [TU_MUTAG, TU_ENZYMES, TU_PTC_FM, TU_PROTEINS, TU_NCI109, TU_IMDB-MULTI] # molhiv and molpcba still missing here.
+    value: TU_REDDIT-MULTI-5K #  [TU_MUTAG, TU_ENZYMES, TU_PROTEINS, TU_NCI109, TU_REDDIT-MULTI-5K] # molhiv and molpcba still missing here.
   dataset.task:
     value: graph
   dataset.task_type:
