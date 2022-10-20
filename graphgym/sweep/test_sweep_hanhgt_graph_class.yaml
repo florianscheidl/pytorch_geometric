@@ -16,7 +16,7 @@ parameters:
 
   # dataset -> in the config file
   dataset.name:
-    values: [TU_MUTAG, TU_ENZYMES, TU_PROTEINS, TU_NCI109] # molhiv and molpcba still missing here.
+    values: [TU_ENZYMES, TU_PROTEINS] # [TU_MUTAG, TU_ENZYMES, TU_PROTEINS, TU_NCI109] # molhiv and molpcba still missing here.
   dataset.task:
     value: graph
   dataset.task_type:

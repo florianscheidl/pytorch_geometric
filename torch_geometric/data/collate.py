@@ -87,7 +87,7 @@ def collate(
     #     edge_type_batch = edge_type_batch+repeat_interleave([data_list[j].edge_stores[i].num_nodes for j in range(len(data_list))])
     # collected_node_stores = []
 
-    print("Going through stores in collate.")
+    # print("Going through stores in collate.")
     for i, out_store in tqdm(enumerate(out.stores)):
         key = out_store._key
         stores = key_to_stores[key]

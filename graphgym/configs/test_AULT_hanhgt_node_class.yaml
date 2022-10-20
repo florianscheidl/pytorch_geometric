@@ -1,6 +1,6 @@
 # The recommended basic settings for GNN
-accelerator: 'cuda'
-devices: 1
+#accelerator: 'cuda'
+#devices: 1
 out_dir: results
 use_wandb: False
 dataset:
