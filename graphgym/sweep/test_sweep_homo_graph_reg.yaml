@@ -90,11 +90,11 @@ parameters:
   # Optimizer
   optim.base_lr:
     value: 0.001
-  optim.lr_scheduler:
+  optim.scheduler:
     value: 'pleateau'
   optim.lr_decay:
     value: 0.5
-  optim.lr_scheduler_patience:
+  optim.patience:
     value: 10
   optim.lr_scheduler_min_lr:
     value: 1e-5
