@@ -66,7 +66,7 @@ if __name__ == '__main__':
     # if transformed_dataset is not None:
     #     dummy_batch = transformed_dataset.data.to(cfg.accelerator)
     #     model(dummy_batch) # lazy initialisation, sometimes this seems to be necessary, not always though
-    if cfg.dataset.name in ['PROTEINS', 'QM9']:
+    if cfg.dataset.name in ['TU_PROTEINS', 'TU_QM9']:
         transformed_dataset = None
         untransformed_dataset = None
         # This is usually hidden in the GraphGymDataModule, but I need the dataset metadata for hanconv, so I'm loading it here too...
