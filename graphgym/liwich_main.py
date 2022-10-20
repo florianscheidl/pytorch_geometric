@@ -75,9 +75,13 @@ if __name__ == '__main__':
         wandb.init(config=cfg)
     logging.info(model)
     logging.info(cfg)
-    if transformed_dataset is not None:
-        dummy_batch = transformed_dataset.data.to(cfg.accelerator)
-        model(dummy_batch) # lazy initialisation, sometimes this seems to be necessary, not always though
+
+    # if transformed_dataset is not None:
+    #     dummy_batch = transformed_dataset.data.to(cfg.accelerator)
+    #     model(dummy_batch) # lazy initialisation, sometimes this seems to be necessary, not always though
+    dummy_batch = transformed_dataset.data.to(cfg.accelerator)
+    model(dummy_batch)  # lazy initialisation, sometimes this seems to be necessary, not always though
+
     cfg.params = params_count(model)  # -> would need to initialize lazy modules.
     logging.info('Num parameters: %s', cfg.params)
     wandb_train.train(model, datamodule, logger=True, use_wandb=use_wandb)

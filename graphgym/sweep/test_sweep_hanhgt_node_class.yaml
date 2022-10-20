@@ -89,7 +89,7 @@ parameters:
   optim.scheduler:
     value: 'step'
   optim.steps:
-    values: [[30,60,90], [30,60,90,120]]
+    value: [30,60,90]
   optim.lr_decay:
     value: 0.5
   optim.patience:

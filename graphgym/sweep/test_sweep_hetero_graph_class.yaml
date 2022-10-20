@@ -16,7 +16,7 @@ parameters:
 
   # dataset -> in the config file
   dataset.name:
-    values: [TU_MUTAG, TU_ENZYMES, TU_PTC, TU_PROTEINS, TU_NCI109, TU_IMDB-M] # molhiv and molpcba still missing here.
+    values: [TU_MUTAG, TU_ENZYMES, TU_PTC_FM, TU_PROTEINS, TU_NCI109, TU_IMDB-MULTI] # molhiv and molpcba still missing here.
   dataset.task:
     value: graph
   dataset.task_type:
@@ -89,7 +89,7 @@ parameters:
   optim.scheduler:
     value: 'step'
   optim.steps:
-    values: [[30,60,90], [30,60,90,120]]
+    value: [30,60,90]
   optim.lr_decay:
     value: 0.5
   optim.patience:
