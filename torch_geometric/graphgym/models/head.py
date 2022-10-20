@@ -28,8 +28,10 @@ class GNNNodeHead(nn.Module):
 
     def _apply_index(self, batch):
         mask = '{}_mask'.format(batch.split)
-        return batch.x[batch[mask]], \
-            batch.y[batch[mask]]
+        if type(batch).__name__ == "HeteroDataBatch":
+            return batch.x_dict['0_cell'][batch[mask]], batch.y[batch[mask]]
+        else:
+            return batch.x[batch[mask]], batch.y[batch[mask]]
 
     def forward(self, batch):
         batch = self.layer_post_mp(batch)

@@ -417,6 +417,8 @@ class MLP(nn.Module):
     def forward(self, batch):
         if isinstance(batch, torch.Tensor):
             batch = self.model(batch)
+        elif type(batch).__name__ == "HeteroDataBatch":
+            batch.x_dict['0_cell'] = self.model(batch.x_dict['0_cell'])
         else:
             batch.x = self.model(batch.x)
         return batch
