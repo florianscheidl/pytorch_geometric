@@ -21,7 +21,7 @@ parameters:
     value: node
   dataset.task_type:
     value: classification
-  dataset.pretransform:
+  dataset.pre_transform:
     value: None # 'lift_and_wire'
 
   # training
