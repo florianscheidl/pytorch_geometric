@@ -35,7 +35,7 @@ parameters:
   # NN parameters
   gnn.act:
     value: relu
-  gnn.batch_norm:
+  gnn.batchnorm:
     value: True
 
   # GNN Specific params
@@ -76,7 +76,7 @@ parameters:
 
   ## wiring:
   wiring.adjacency_types:
-    value: [ "boundary", "upper" ]
+    value: "boundary,upper"
 
   ## choosing heterogeneous GRL architecture
   gnn.layer_type:

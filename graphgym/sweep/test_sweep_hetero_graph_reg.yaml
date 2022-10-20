@@ -16,11 +16,11 @@ parameters:
 
   # dataset -> in the config file
   dataset.name:
-    value: [TU_ZINC, TU_Qm9]
+    values: [TU_ZINC, TU_Qm9]
   dataset.task:
     value: graph
   dataset.task_type:
-    value: regression
+    values: regression
   dataset.pre_transform:
     value: lift_and_wire # 'lift_and_wire'
 
@@ -35,7 +35,7 @@ parameters:
   # NN parameters
   gnn.act:
     value: relu
-  gnn.batch_norm:
+  gnn.batchnorm:
     value: True
 
   # GNN Specific params
