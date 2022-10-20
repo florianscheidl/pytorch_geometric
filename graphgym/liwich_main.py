@@ -53,20 +53,8 @@ if __name__ == '__main__':
     set_printing()
     seed_everything(cfg.seed)
     auto_select_device()
-    # Set machine learning pipeline
-    datamodule = GraphGymDataModule() # how does this know which config to use?
 
-    model = create_model() # how does this know which config to use?
-    # Print model info
-    if use_wandb:
-        wandb.init(config=cfg)
-    logging.info(model)
-    logging.info(cfg)
-
-    # if transformed_dataset is not None:
-    #     dummy_batch = transformed_dataset.data.to(cfg.accelerator)
-    #     model(dummy_batch) # lazy initialisation, sometimes this seems to be necessary, not always though
-
+    # Load dataset for metadata
     transformed_dataset = None
     untransformed_dataset = None
     require_lazy_init = False
@@ -89,6 +77,20 @@ if __name__ == '__main__':
         dummy_dataset = transformed_dataset[0:min(2, len(transformed_dataset))]
     elif untransformed_dataset is not None:
         dummy_dataset = untransformed_dataset[0:min(2, len(untransformed_dataset))]
+
+    # Set machine learning pipeline
+    datamodule = GraphGymDataModule() # how does this know which config to use?
+
+    model = create_model() # how does this know which config to use?
+    # Print model info
+    if use_wandb:
+        wandb.init(config=cfg)
+    logging.info(model)
+    logging.info(cfg)
+
+    # if transformed_dataset is not None:
+    #     dummy_batch = transformed_dataset.data.to(cfg.accelerator)
+    #     model(dummy_batch) # lazy initialisation, sometimes this seems to be necessary, not always though
 
     if require_lazy_init:
         dummy_batch = dummy_dataset.data.to(cfg.accelerator)
