@@ -50,7 +50,7 @@ parameters:
   gnn.stage_type:
     value: skipconcat
   model.graph_pooling:
-    value: add
+    value: hetero_add_pooling
 
   # Model-specific GNN params:
   gnn.graph_type:

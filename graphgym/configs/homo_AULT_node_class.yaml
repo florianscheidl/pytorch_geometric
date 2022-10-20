@@ -28,7 +28,7 @@ train:
 model:
   type: gnn
   loss_fun: cross_entropy # mse
-  graph_pooling: add # hetero_add_pooling # type_readout
+  graph_pooling: hetero_add_pooling # hetero_add_pooling # type_readout
 gnn:
   graph_type: 'homo' #"hetero" #**************************************#
   layers_pre_mp: 1
