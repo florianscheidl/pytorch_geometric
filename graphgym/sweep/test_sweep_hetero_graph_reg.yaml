@@ -81,7 +81,7 @@ parameters:
 
   # Regularization
   gnn.dropout:
-    values: [ "0.0", "0.2" ] # Hyperparameter search
+    value: "0.0" # Hyperparameter search
 
   # Optimizer
   optim.base_lr:
