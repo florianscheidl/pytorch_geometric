@@ -193,13 +193,24 @@ class TUDataset(InMemoryDataset):
         os.rename(osp.join(folder, self.name), self.raw_dir)
 
     def process(self):
+        print("Entered process in TUDataset")
         self.data, self.slices, sizes = read_tu_data(self.raw_dir, self.name)
 
         if self.pre_filter is not None or self.pre_transform is not None:
-            data_list = [self.get(idx) for idx in range(len(self))]
+            print('Getting indices')
+            data_list = []
+            for idx in tqdm(range(len(self))):
+                data_list.append(self.get(idx))
+            # data_list = [self.get(idx) for idx in range(len(self))]
 
             if self.pre_filter is not None:
-                data_list = [d for d in data_list if self.pre_filter(d)]
+                print("Filtering...")
+                new_data_list = []
+                for data in tqdm(data_list):
+                    if self.pre_filter(data):
+                        new_data_list.append(data)
+                data_list = new_data_list
+                #data_list = [d for d in data_list if self.pre_filter(d)]
 
             if self.pre_transform is not None:
                 new_data_list = []
