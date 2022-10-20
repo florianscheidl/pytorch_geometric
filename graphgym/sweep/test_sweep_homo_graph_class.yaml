@@ -76,7 +76,7 @@ parameters:
 
   ## choosing heterogeneous GRL architecture
   gnn.layer_type:
-    values: [ 'hanconv', 'hgtconv' ] # hanconv, hgtconv # requires graph_type == hetero
+    values: ['gcnconv', 'ginconv', 'gatconv' ,'sageconv'] # hanconv, hgtconv # requires graph_type == hetero
   # add more arguments in case of using heteroconv
 
   # Regularization
