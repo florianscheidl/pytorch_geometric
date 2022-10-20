@@ -18,7 +18,7 @@ from torch_geometric.graphgym.config import (
     set_out_dir,
     set_run_dir,
 )
-from torch_geometric.graphgym.loader import lift_wire_transform_formatter
+from torch_geometric.graphgym.loader import lift_wire_transform_formatter, load_dataset
 from torch_geometric.graphgym.logger import set_printing
 from torch_geometric.graphgym.train import GraphGymDataModule
 from torch_geometric.graphgym.model_builder import create_model
@@ -57,6 +57,7 @@ if __name__ == '__main__':
     datamodule = GraphGymDataModule() # how does this know which config to use?
 
     transformed_dataset = None
+    untransformed_dataset = None
     # This is usually hidden in the GraphGymDataModule, but I need the dataset metadata for hanconv, so I'm loading it here too...
     if cfg.dataset.transform is not None:
         transformed_dataset = lift_wire_transform_formatter(name=cfg.dataset.name,
@@ -66,8 +67,15 @@ if __name__ == '__main__':
         transformed_dataset = lift_wire_transform_formatter(name=cfg.dataset.name,
                                                             dataset_dir=cfg.dataset.dir,
                                                             pre_transform=cfg.dataset.pre_transform)
+    else:
+        untransformed_dataset = load_dataset()
     if transformed_dataset is not None:
         cfg.dataset.metadata = transformed_dataset.data.metadata()
+        dummy_dataset = transformed_dataset[0]
+    elif untransformed_dataset is not None:
+        dummy_dataset = untransformed_dataset[0]
+    else:
+        raise ValueError('Neither transformed nor untransformed dataset exist, logic error.')
 
     model = create_model() # how does this know which config to use?
     # Print model info
@@ -79,7 +87,7 @@ if __name__ == '__main__':
     # if transformed_dataset is not None:
     #     dummy_batch = transformed_dataset.data.to(cfg.accelerator)
     #     model(dummy_batch) # lazy initialisation, sometimes this seems to be necessary, not always though
-    dummy_batch = transformed_dataset.data.to(cfg.accelerator)
+    dummy_batch = dummy_dataset.to(cfg.accelerator)
     model(dummy_batch)  # lazy initialisation, sometimes this seems to be necessary, not always though
 
     cfg.params = params_count(model)  # -> would need to initialize lazy modules.
