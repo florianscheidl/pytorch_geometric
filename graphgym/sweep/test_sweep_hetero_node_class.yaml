@@ -21,6 +21,8 @@ parameters:
     value: node
   dataset.task_type:
     value: classification
+  dataset.transductive:
+    value: true
   dataset.pre_transform:
     value: lift_and_wire # 'lift_and_wire'
 

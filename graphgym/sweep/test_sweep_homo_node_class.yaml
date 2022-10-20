@@ -19,6 +19,8 @@ parameters:
     values: [Cora, CiteSeer, PubMed]
   dataset.task:
     value: node
+  dataset.transductive:
+    value: true
   dataset.task_type:
     value: classification
   dataset.pre_transform:

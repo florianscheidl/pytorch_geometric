@@ -3,7 +3,7 @@ out_dir: results
 use_wandb: False
 dataset:
   format: PyG #**************************************# # PyG, OGB
-  name: CiteSeer #**************************************# # for TUDatasets, the right format is TU_{name}, e.g. TU_MUTAG, TU_PTC_FM, TU_PROTEINS,
+  name: Cora #**************************************# # for TUDatasets, the right format is TU_{name}, e.g. TU_MUTAG, TU_PTC_FM, TU_PROTEINS,
   task: node #**************************************#
   task_type: classification #**************************************#
   transductive: true #**************************************#
@@ -33,7 +33,7 @@ gnn:
   layers_mp: 2 # hyperparameter search
   layers_post_mp: 1 # hyperparameter search
   dim_inner: 8 # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
-  layer_type: 'hgtconv' # hgtconv # hanconv, hgtconv # requires graph_type == hetero
+  layer_type: 'hanconv' # hgtconv # hanconv, hgtconv # requires graph_type == hetero
   stage_type: skipconcat
   batchnorm: true # currently not supported, must be set to false
   act: prelu # hyperparameter search
