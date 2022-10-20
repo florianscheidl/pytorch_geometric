@@ -2,6 +2,7 @@ from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from typing import Any, List, Optional, Tuple, Union
 
+from tqdm import tqdm
 import torch
 from torch import Tensor
 from torch_sparse import SparseTensor, cat
@@ -86,7 +87,8 @@ def collate(
     #     edge_type_batch = edge_type_batch+repeat_interleave([data_list[j].edge_stores[i].num_nodes for j in range(len(data_list))])
     # collected_node_stores = []
 
-    for i, out_store in enumerate(out.stores):
+    print("Going through stores in collate.")
+    for i, out_store in tqdm(enumerate(out.stores)):
         key = out_store._key
         stores = key_to_stores[key]
 

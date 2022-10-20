@@ -220,6 +220,7 @@ class TUDataset(InMemoryDataset):
                 data_list = new_data_list
                 #data_list = [self.pre_transform(d) for d in data_list]
 
+            print("Beginning to collate...")
             self.data, self.slices = self.collate(data_list)
             self._data_list = None  # Reset cache.
 
