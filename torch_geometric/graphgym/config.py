@@ -423,6 +423,12 @@ def set_cfg(cfg):
     # Learning rate multiplier for 'steps' policy
     cfg.optim.lr_decay = 0.1
 
+    # Patience for ReduceLROnPlateau
+    cfg.optim.patience = 10
+
+    # Min LR
+    cfg.optim.lr_scheduler_min_lr = 1e-5
+
     # Maximal number of epochs
     cfg.optim.max_epoch = 200
 

@@ -1,0 +1,105 @@
+program: graphgym/liwich_main.py
+command:
+  - ${interpreter}
+  - ${program}
+  - "--cfg"
+  - "graphgym/configs/hetero_AULT_mutag.yaml"
+  - "--repeat"
+  - "1"
+  - ${args_no_hyphens}
+method: grid
+parameters:
+
+  # General
+  seed:
+    values: [0]
+
+  # dataset -> in the config file
+  dataset.name:
+    values: [TU_MUTAG, TU_ENZYMES, TU_PTC, TU_PROTEINS, TU_NCI109, TU_IMDB-M] # molhiv and molpcba still missing here.
+  dataset.task:
+    value: graph
+  dataset.task_type:
+    value: classification
+  dataset.pretransform:
+    value: None # 'lift_and_wire'
+
+  # training
+  batch_size:
+    value: 32
+  epochs:
+    value: 1 # default: 200
+  train_eval_period:
+    value: 10
+
+  # NN parameters
+  act:
+    value: relu
+  gnn.batch_norm:
+    value: True
+
+  # GNN Specific params
+  gnn.dim_inner:
+    value: 8 # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
+  gnn.layers_pre_mp:
+    value: 1
+  gnn.layers_mp:
+    value: 1 # hyperparameter search
+  gnn.layers_post_mp:
+    value: 1 # hyperparameter search
+  gnn.stage_type:
+    value: skipconcat
+  readout:
+    value: sum
+  final_readout:
+    value: sum
+
+  # Model-specific GNN params:
+  gnn.graph_type:
+    value: homo
+
+  ## lifting:
+  lift.data_model:
+    value: simplicial_complex
+  lift.method:
+    value: clique_complex
+  use_coboundaries:
+    value: False
+  lift.max_clique_dim:
+    value: 2
+  lift.max_simple_cycle_length:
+    value: 3
+  lift.max_induced_cycle_length:
+    value: [3,5,7]
+  lift.init_edges:
+    value: True
+  lift.init_rings:
+    value: True
+  init_method:
+    value: sum
+
+  ## wiring:
+  wiring.adjacency_types:
+    value: ["boundary", "upper"]
+
+  ## choosing heterogeneous GRL architecture
+  gnn.layer_type:
+    values: ['ginconv', 'gatconv', 'gcnconv','sageconv'] # hanconv, hgtconv # requires graph_type == hetero
+ # add more arguments in case of using heteroconv
+
+  # Regularization
+  gnn.dropout:
+    values: ["0.0", "0.2"] # Hyperparameter search
+
+  # Optimizer
+  optim.base_lr:
+    value: 0.001
+  optim.lr_scheduler:
+    value: 'pleateau'
+  optim.lr_decay:
+    value: 0.5
+  optim.lr_scheduler_patience:
+    value: 10
+  optim.lr_scheduler_min_lr:
+    value: 1e-5
+

@@ -3,6 +3,7 @@ from typing import Iterator
 from torch.nn import Parameter
 from torch.optim import Adagrad, Optimizer
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch_geometric.graphgym.config import cfg
 
 import torch_geometric.graphgym.register as register
 
@@ -16,4 +17,7 @@ def adagrad_optimizer(params: Iterator[Parameter], base_lr: float,
 @register.register_scheduler('pleateau')
 def plateau_scheduler(optimizer: Optimizer, patience: int,
                       lr_decay: float) -> ReduceLROnPlateau:
-    return ReduceLROnPlateau(optimizer, patience=patience, factor=lr_decay)
+    return ReduceLROnPlateau(optimizer,
+                             patience=cfg.optim.patience,
+                             factor=cfg.optim.lr_decay,
+                             min_lr=cfg.optim.lr_scheduler_min_lr)

@@ -19,16 +19,16 @@ lift_wire = LiftAndWire(lifting_cell, wiring)
 #load example dataset with the given transform
 
 normal = True
-normal = False
+#normal = False
 pre_transform = True
 # name='PROTEINS'
-name='Cora'
+name='MUTAG'
 # name='NCI1'
 
 # if normal:
 #     dataset = TUDataset(root='processed_dataset',
 #                         use_node_attr=True,
-#                         name='MUTAG')
+#                         name=name)
 # elif pre_transform:
 #     dataset = TUDataset(pre_transform=lift_wire,
 #                         root='processed_dataset',
@@ -40,8 +40,8 @@ name='Cora'
 #                         use_node_attr = True,
 #                         name=name)
 
-dataset_no_transform = Planetoid('processed_dataset', name, transform=lift_wire)
-
+# dataset_no_transform = Planetoid('processed_dataset', name, transform=lift_wire)
+dataset_no_transform = TUDataset('processed_dataset', name)
 # where are the masks?
 
 # train_dataset = dataset[len(dataset) // 10:]
