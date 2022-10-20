@@ -25,11 +25,11 @@ parameters:
     value: None # 'lift_and_wire'
 
   # training
-  batch_size:
+  train.batch_size:
     value: 32
-  epochs:
+  optim.max_epoch:
     value: 1 # default: 200
-  train_eval_period:
+  train.eval_period:
     value: 10
 
   # NN parameters
@@ -49,10 +49,8 @@ parameters:
     value: 1 # hyperparameter search
   gnn.stage_type:
     value: skipconcat
-  readout:
-    value: sum
-  final_readout:
-    value: sum
+  model.graph_pooling:
+    value: add
 
   # Model-specific GNN params:
   gnn.graph_type:
@@ -62,9 +60,7 @@ parameters:
   lift.data_model:
     value: cell_complex
   lift.method:
-    values: [clique, rings]
-  use_coboundaries:
-    value: False
+    values: [ clique, rings ]
   lift.max_clique_dim:
     value: 3
   lift.max_simple_cycle_length:
@@ -75,21 +71,21 @@ parameters:
     value: True
   lift.init_rings:
     value: True
-  init_method:
+  lift.init_method:
     value: sum
 
   ## wiring:
   wiring.adjacency_types:
-    value: ["boundary", "upper"]
+    value: [ "boundary", "upper" ]
 
   ## choosing heterogeneous GRL architecture
   gnn.layer_type:
-    values: ['ginconv', 'gatconv', 'gcnconv','sageconv'] # hanconv, hgtconv # requires graph_type == hetero
- # add more arguments in case of using heteroconv
+    values: [ 'hanconv', 'hgtconv' ] # hanconv, hgtconv # requires graph_type == hetero
+  # add more arguments in case of using heteroconv
 
   # Regularization
   gnn.dropout:
-    values: ["0.0", "0.2"] # Hyperparameter search
+    values: [ "0.0", "0.2" ] # Hyperparameter search
 
   # Optimizer
   optim.base_lr:
@@ -102,4 +98,3 @@ parameters:
     value: 10
   optim.lr_scheduler_min_lr:
     value: 1e-5
-

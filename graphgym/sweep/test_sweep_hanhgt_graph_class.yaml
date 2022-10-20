@@ -25,11 +25,11 @@ parameters:
     value: lift_and_wire # 'lift_and_wire'
 
   # training
-  batch_size:
+  train.batch_size:
     value: 32
-  epochs:
+  optim.max_epoch:
     value: 1 # default: 200
-  train_eval_period:
+  train.eval_period:
     value: 10
 
   # NN parameters
@@ -49,10 +49,8 @@ parameters:
     value: 1 # hyperparameter search
   gnn.stage_type:
     value: skipconcat
-  readout:
-    value: sum
-  final_readout:
-    value: sum
+  model.graph_pooling:
+    value: add
 
   # Model-specific GNN params:
   gnn.graph_type:
@@ -63,8 +61,6 @@ parameters:
     value: cell_complex
   lift.method:
     values: [clique, rings]
-  use_coboundaries:
-    value: False
   lift.max_clique_dim:
     value: 3
   lift.max_simple_cycle_length:
@@ -75,7 +71,7 @@ parameters:
     value: True
   lift.init_rings:
     value: True
-  init_method:
+  lift.init_method:
     value: sum
 
   ## wiring:
@@ -102,4 +98,3 @@ parameters:
     value: 10
   optim.lr_scheduler_min_lr:
     value: 1e-5
-
