@@ -69,6 +69,8 @@ if __name__ == '__main__':
 
     transformed_dataset = None
     untransformed_dataset = None
+    require_lazy_init = False
+
     # This is usually hidden in the GraphGymDataModule, but I need the dataset metadata for hanconv, so I'm loading it here too...
     if cfg.dataset.transform is not None:
         transformed_dataset = lift_wire_transform_formatter(name=cfg.dataset.name,
@@ -79,6 +81,7 @@ if __name__ == '__main__':
                                                             dataset_dir=cfg.dataset.dir,
                                                             pre_transform=cfg.dataset.pre_transform)
     elif cfg.dataset.name in ['TU_PROTEINS', 'TU_QM9']:
+        require_lazy_init = True
         untransformed_dataset = load_dataset()
 
     if transformed_dataset is not None:
@@ -87,7 +90,7 @@ if __name__ == '__main__':
     elif untransformed_dataset is not None:
         dummy_dataset = untransformed_dataset[0:min(2, len(untransformed_dataset))]
 
-    if cfg.dataset.name in ['TU_PROTEINS', 'TU_QM9']:
+    if require_lazy_init:
         dummy_batch = dummy_dataset.data.to(cfg.accelerator)
         model(dummy_batch)  # lazy initialisation, sometimes this seems to be necessary, not always though
 
