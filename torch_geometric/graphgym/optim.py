@@ -68,8 +68,5 @@ def create_scheduler(optimizer: Optimizer, cfg_optim: Any) -> Any:
     r"""Creates a config-driven learning rate scheduler."""
     func = register.scheduler_dict.get(cfg_optim.scheduler, None)
     if func is not None:
-        if hasattr(cfg_optim, 'monitor'):
-            return from_config(func)(optimizer, cfg=cfg_optim, monitor=cfg_optim.monitor)
-        else:
-            return from_config(func)(optimizer, cfg=cfg_optim)
+        return from_config(func)(optimizer, cfg=cfg_optim)
     raise ValueError(f"Scheduler '{cfg_optim.scheduler}' not supported")

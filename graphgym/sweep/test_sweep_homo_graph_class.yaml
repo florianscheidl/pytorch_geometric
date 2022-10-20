@@ -87,7 +87,9 @@ parameters:
   optim.base_lr:
     value: 0.001
   optim.scheduler:
-    value: 'pleateau'
+    value: 'step'
+  optim.steps:
+    values: [[30,60,90], [30,60,90,120]]
   optim.lr_decay:
     value: 0.5
   optim.patience:
