@@ -16,7 +16,7 @@ parameters:
 
   # dataset -> in the config file
   dataset.name:
-    values: [Cora, Citeseer, Pubmed]
+    values: [Cora, CiteSeer, PubMed]
   dataset.task:
     value: node
   dataset.task_type:
