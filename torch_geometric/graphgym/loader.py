@@ -215,14 +215,10 @@ def load_dataset():
     return dataset
 
 def lift_wire_transform_formatter(name, dataset_dir, pre_transform=None, transform=None):
-    if cfg.lift.data_model == "simplicial_complex":
-        lift = lifts.LiftGraphToSimplicialComplex(lift_method=cfg.lift.method,
-                                                  init_method=cfg.lift.init_method,
-                                                  max_clique_dim=cfg.lift.max_clique_dim
-                                                  )
-    elif cfg.lift.data_model == "cell_complex":
+    if cfg.lift.data_model == "cell_complex":
         lift = lifts.LiftGraphToCellComplex(lift_method=cfg.lift.method,
                                             init_method=cfg.lift.init_method,
+                                            max_clique_dim=cfg.lift.max_clique_dim,
                                             max_simple_cycle_length=cfg.lift.max_simple_cycle_length,
                                             max_induced_cycle_length=cfg.lift.max_induced_cycle_length,
                                             init_edges=cfg.lift.init_edges,
@@ -230,7 +226,7 @@ def lift_wire_transform_formatter(name, dataset_dir, pre_transform=None, transfo
                                             )
     else:
         raise NotImplementedError
-    if cfg.lift.data_model in ["simplicial_complex", "cell_complex"]:
+    if cfg.lift.data_model == "cell_complex":
         wiring = wirings.HypergraphWiring(cfg.wiring.adjacency_types)
     else:
         raise NotImplementedError

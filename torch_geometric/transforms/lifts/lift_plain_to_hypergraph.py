@@ -33,6 +33,8 @@ from joblib import delayed
 class LiftGraphToSimplicialComplex(LiftTransform):
     """Class for lifting transformation from plain graph to simplicial complex."""
 
+    # TODO: depreciate this -> it is covered by LiftGraphToCellComplex and selecting clque_complex
+
     def __init__(self, lift_method: str = "inclusion", init_method: Optional[str] = "sum",
                  max_clique_dim: Optional[int] = 3, include_adj: dict = None,
                  skeleton_preserving: Optional[bool] = True,
@@ -85,12 +87,13 @@ class LiftGraphToCellComplex(LiftTransform):
 
     # TODO: Potentially extend this to higher dimensions.
 
-    def __init__(self, lift_method: str = "inclusion", max_simple_cycle_length: Optional[int] = 3,
+    def __init__(self, lift_method: str = "inclusion", max_clique_dim = 3 , max_simple_cycle_length: Optional[int] = 3,
                  max_induced_cycle_length: Optional[int] = 3, include_adj=None,
                  skeleton_preserving: Optional[bool] = True, init_method: Optional[str] = 'sum',
                  init_edges: bool = False, init_rings: bool = False):
         super().__init__()
         self.lift_method = lift_method
+        self.max_clique_dim = max_clique_dim
         self.max_simple_cycle_length = max_simple_cycle_length
         self.max_induced_cycle_length = max_induced_cycle_length
         self.include_adj = include_adj
@@ -114,6 +117,18 @@ class LiftGraphToCellComplex(LiftTransform):
                                                                                              include_down_adj=
                                                                                              self.include_adj["lower"],
                                                                                              init_method=self.init_method)
+            return lifted_data
+
+        elif self.lift_method == "clique":
+            self.boundary_adjacency_tensors, lifted_data = compute_clique_complex_with_gudhi(x=data.x,
+                                                                                             y=data.y,
+                                                                                             edge_attr=data.edge_attr,
+                                                                                             edge_index=data.edge_index,
+                                                                                             expansion_dim=self.max_clique_dim,
+                                                                                             size=data.num_nodes,
+                                                                                             include_down_adj=
+                                                                                             self.include_adj["lower"],
+                                                                                             init_method="sum")
             return lifted_data
 
         elif self.lift_method == "rings":

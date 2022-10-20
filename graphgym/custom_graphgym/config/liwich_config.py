@@ -22,7 +22,7 @@ def set_cfg_lift_wire(cfg):
 
     cfg.lift = CN()
 
-    cfg.lift.data_model = "simplicial_complex"  # one of "simplicial_complex", "cell_complex
+    cfg.lift.data_model = "simplicial_complex"  # one of "simplicial_complex", "cell_complex"
 
     cfg.lift.method = "inclusion"  # alternatively: clique_complex (for simplicial complex), or rings (for cell complex)
     cfg.lift.init_method = "sum" # alternatively: "random" or "sum"

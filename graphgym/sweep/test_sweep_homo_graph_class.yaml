@@ -33,7 +33,7 @@ parameters:
     value: 10
 
   # NN parameters
-  act:
+  gnn.act:
     value: relu
   gnn.batch_norm:
     value: True
@@ -60,17 +60,17 @@ parameters:
 
   ## lifting:
   lift.data_model:
-    value: simplicial_complex
+    value: cell_complex
   lift.method:
-    value: clique_complex
+    values: [clique, rings]
   use_coboundaries:
     value: False
   lift.max_clique_dim:
-    value: 2
+    value: 3
   lift.max_simple_cycle_length:
     value: 3
   lift.max_induced_cycle_length:
-    value: [3,5,7]
+    value: 5
   lift.init_edges:
     value: True
   lift.init_rings:
