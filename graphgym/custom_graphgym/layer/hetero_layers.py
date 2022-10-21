@@ -279,7 +279,7 @@ class HGTConv(MessagePassing):
         in_channels: Union[int, Dict[str, int]],
         out_channels: int,
         metadata: Metadata,
-        heads: int = 1,
+        heads: int = 4,
         group_agg: str = "sum",
         **kwargs,
     ):
