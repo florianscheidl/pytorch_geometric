@@ -109,7 +109,8 @@ class LiftGraphToCellComplex(LiftTransform):
 
     def __call__(self, data: Data):
         if self.lift_method == "inclusion":
-            self.boundary_adjacency_tensors, lifted_data = compute_clique_complex_with_gudhi(x=data.x,
+            self.boundary_adjacency_tensors, lifted_data = compute_clique_complex_with_gudhi(data = data,
+                                                                                             x=data.x,
                                                                                              y=data.y,
                                                                                              edge_attr=data.edge_attr,
                                                                                              edge_index=data.edge_index,
@@ -120,7 +121,8 @@ class LiftGraphToCellComplex(LiftTransform):
             return lifted_data
 
         elif self.lift_method == "clique":
-            self.boundary_adjacency_tensors, lifted_data = compute_clique_complex_with_gudhi(x=data.x,
+            self.boundary_adjacency_tensors, lifted_data = compute_clique_complex_with_gudhi(data = data,
+                                                                                             x=data.x,
                                                                                              y=data.y,
                                                                                              edge_attr=data.edge_attr,
                                                                                              edge_index=data.edge_index,
@@ -387,7 +389,7 @@ def generate_cochain(dim, x, all_upper_index, all_lower_index,
                    num_cells_up=num_cells_up, boundary_index=boundary_index)
 
 
-def compute_clique_complex_with_gudhi(x: Tensor, edge_index: Adj, size: int,
+def compute_clique_complex_with_gudhi(data: Data, x: Tensor, edge_index: Adj, size: int,
                                       expansion_dim: int = None, y: Tensor = None,
                                       edge_attr=None,
                                       include_down_adj=True,
@@ -437,7 +439,12 @@ def compute_clique_complex_with_gudhi(x: Tensor, edge_index: Adj, size: int,
                                    simplex_tables, boundaries_tables, complex_dim=complex_dim, y=y)
         cochains.append(cochain)
 
-    return boundary_adjacency_tensors, Complex(*cochains, y=complex_y, dimension=complex_dim)
+    complex = Complex(*cochains, y=complex_y, dimension=complex_dim)
+    for key in data.keys:
+        complex.keys.append(key)
+        setattr(complex, key, data[key])
+
+    return boundary_adjacency_tensors, complex
 
 
 def convert_graph_dataset_with_gudhi(dataset, expansion_dim: int, include_down_adj=True,
