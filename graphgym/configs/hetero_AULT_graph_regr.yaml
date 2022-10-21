@@ -43,13 +43,16 @@ gnn:
   agg: add # type_specific_aggregation: at the moment, aggregations ignore types and other information!
   normalize_adj: false # not sure if applicable
   heteroconv:
-    _0_cell_0_cell: 'gatconv'
+    _0_cell_0_cell: 'ginconv'
     _0_cell_1_cell: 'gatconv'
     _1_cell_0_cell: 'gatconv'
-    _1_cell_1_cell: 'gatconv'
-    _1_cell_2_cell: 'gatconv'
-    _2_cell_1_cell: 'gatconv'
-    _2_cell_2_cell: 'gatconv'
+    _1_cell_1_cell: 'ginconv'
+    _1_cell_2_cell: 'sageconv'
+    _2_cell_1_cell: 'sageconv'
+    _2_cell_2_cell: 'ginconv'
+    _2_cell_3_cell: 'sageconv'
+    _3_cell_2_cell: 'sageconv'
+    _3_cell_3_cell: 'ginconv'
 optim:
   optimizer: adam
   base_lr: 0.05
