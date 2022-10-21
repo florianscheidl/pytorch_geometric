@@ -38,9 +38,9 @@ parameters:
   train.sample_node:
     value: True
   train.node_per_graph:
-    value: 32
+    value: 16
   train.walk_length:
-    value: 8
+    value: 3
 
   # NN parameters
   gnn.act:
