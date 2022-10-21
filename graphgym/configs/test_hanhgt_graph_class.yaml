@@ -16,7 +16,7 @@ lift:
   init_edges: True
   init_rings: True
   init_method: sum
-  method: rings
+  method: clique
   max_induced_cycle_length: 5
 wiring:
   adjacency_types: ["boundary","upper"]

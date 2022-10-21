@@ -136,4 +136,8 @@ def _separate(
         ]
 
     else:
+        try:
+            value[idx]
+        except:
+            raise IndexError
         return value[idx]

@@ -18,7 +18,7 @@ def collate(
     increment: bool = True, # TODO: changed default from True to False
     add_batch: bool = True,
     follow_batch: Optional[Union[List[str]]] = None,
-    exclude_keys: Optional[Union[List[str]]] = None,
+    exclude_keys: Optional[Union[List[str]]] = ['walks'],
 ) -> Tuple[BaseData, Mapping, Mapping]:
     # Collates a list of `data` objects into a single object of type `cls`.
     # `collate` can handle both homogeneous and heterogeneous data objects by
@@ -111,7 +111,6 @@ def collate(
                 if attr in exclude_keys:  # Do not include top-level attribute.
                     continue
                 values = [getattr(store, attr) if store is not None and hasattr(store, attr) else None for store in stores]
-                values = [getattr(store, attr) if store is not None and hasattr(store, attr) else None for store in stores]
 
                 # The `num_nodes` attribute needs special treatment, as we need to
                 # sum their values up instead of merging them to a list:
@@ -165,8 +164,12 @@ def collate(
                 try:
                     out_store.batch_dict = {}
                     for i in range(len(max_data_store.node_types)):
+                        # repeat_interleave_list = []
+                        # for j in range(len(data_list)):
+                        #     repeat_interleave_list.append(data_list[j].node_stores[i]._mapping['_Cochain__x'].size()[0] if len(data_list[j].node_stores)>i and hasattr(data_list[j].node_stores[i]._mapping, '_Cochain__x') else 0)
+                        # out_store.batch_dict[max_data_store.node_types[i]] = repeat_interleave(repeat_interleave_list)
                         out_store.batch_dict[max_data_store.node_types[i]] = repeat_interleave(
-                            [data_list[j].node_stores[i]._mapping['_Cochain__x'].size()[0] if len(data_list[j].node_stores)>i and len(data_list[j].node_stores[i])>0 else 0 for j in range(len(data_list))])
+                            [data_list[j].node_stores[i]._mapping['_Cochain__x'].size()[0] if (len(data_list[j].node_stores)>i and ('_Cochain__x' in data_list[j].node_stores[i]._mapping)) else 0 for j in range(len(data_list))])
                         #out_store.batch_dict[max_data_store.node_types[i]] = repeat_interleave([data_list[j].node_stores[i]._mapping['_Cochain__x'].size()[0] for j in range(len(data_list)) if len(data_list[j].node_stores)>i and len(data_list[j].node_stores[i])>0])
                 except:
                     raise Exception("Batching error for heterogeneous graph. Please check the data_list.")
