@@ -20,7 +20,7 @@ parameters:
   dataset.task:
     value: graph
   dataset.task_type:
-    values: regression
+    value: regression
   dataset.pre_transform:
     value: lift_and_wire # 'lift_and_wire'
 
