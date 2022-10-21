@@ -62,8 +62,8 @@ def set_cfg_lift_wire(cfg):
     cfg.gnn.graph_type = "hetero"
 
     # For pre_mp, we would want to implement heterolinear.
-    cfg.gnn.layers_pre_mp = 0 # due to how we transform the data, pre_mp is not applicable.
-    cfg.gnn.layers_mp = 3
+    cfg.gnn.layers_pre_mp = 1 # due to how we transform the data, pre_mp is not applicable.
+    cfg.gnn.layers_mp = 2
     cfg.gnn.layers_post_mp = 1
 
     if cfg.dataset.task == "node" and cfg.gnn.graph_type=='hetero':
@@ -78,9 +78,12 @@ def set_cfg_lift_wire(cfg):
     # for heteroconv -> this is quite general, so setting up the config could be lengthy
     cfg.gnn.heteroconv = CN()
     cfg.gnn.heteroconv._0_cell_0_cell = 'ginconv'
-    cfg.gnn.heteroconv._0_cell_1_cell = 'ginconv'
+    cfg.gnn.heteroconv._0_cell_1_cell = 'gatconv'
     cfg.gnn.heteroconv._1_cell_0_cell = 'gatconv'
-    cfg.gnn.heteroconv._1_cell_1_cell = 'gatconv'
+    cfg.gnn.heteroconv._1_cell_1_cell = 'ginconv'
     cfg.gnn.heteroconv._1_cell_2_cell = 'sageconv'
     cfg.gnn.heteroconv._2_cell_1_cell = 'sageconv'
-    cfg.gnn.heteroconv._2_cell_2_cell = 'sageconv'
+    cfg.gnn.heteroconv._2_cell_2_cell = 'ginconv'
+    cfg.gnn.heteroconv._2_cell_3_cell = 'sageconv'
+    cfg.gnn.heteroconv._3_cell_2_cell = 'sageconv'
+    cfg.gnn.heteroconv._3_cell_3_cell = 'ginconv'
