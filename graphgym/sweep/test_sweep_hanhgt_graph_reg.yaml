@@ -24,13 +24,23 @@ parameters:
   dataset.pre_transform:
     value: lift_and_wire # 'lift_and_wire'
 
-  # training
+  # training and node sampling
   train.batch_size:
     value: 32
   optim.max_epoch:
     value: 2 # default: 200
   train.eval_period:
-    value: 10
+    value: 50 # what does this mean?
+  train.ckpt_period:
+    value: 100 # what does this mean?
+  train.sampler:
+    value: 'saint_rw' # 'saint_rw', 'saint_node', 'saint_edge'
+  train.sample_node:
+    value: True
+  train.node_per_graph:
+    value: 32
+  train.walk_length:
+    value: 8
 
   # NN parameters
   gnn.act:
