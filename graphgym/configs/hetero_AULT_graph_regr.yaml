@@ -25,7 +25,8 @@ train:
   batch_size: 16
   eval_period: 50 # what does this mean?
   ckpt_period: 100 # what does this mean?
-  sampler: 'saint_rw' # 'saint_rw', 'saint_node', 'saint_edge'
+  sampler: 'neighbor' # 'saint_rw', 'saint_node', 'saint_edge'
+  neighbor_sizes: [10,10,5,5]
   sample_node: True
   node_per_graph: 32
   walk_length: 8
