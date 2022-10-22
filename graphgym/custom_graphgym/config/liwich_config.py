@@ -87,3 +87,5 @@ def set_cfg_lift_wire(cfg):
     cfg.gnn.heteroconv._2_cell_3_cell = 'sageconv'
     cfg.gnn.heteroconv._3_cell_2_cell = 'sageconv'
     cfg.gnn.heteroconv._3_cell_3_cell = 'ginconv'
+
+    cfg.optim.step_size = 30
