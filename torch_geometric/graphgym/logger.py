@@ -53,7 +53,7 @@ class Logger(object):
         self._epoch_total = cfg.optim.max_epoch
         self._time_total = 0  # won't be reset
 
-        self.out_dir = '{}/{}'.format(cfg.run_dir, name)
+        self.out_dir = f'{cfg.run_dir}_{time.time_ns()}/{name}'
         makedirs(self.out_dir)
         if cfg.tensorboard_each_run:
             from tensorboardX import SummaryWriter
@@ -225,7 +225,7 @@ class Logger(object):
         # print
         logging.info('{}: {}'.format(self.name, stats))
         # json
-        dict_to_json(stats, f'{self.out_dir}_{time.time_ns()}/stats.json')
+        dict_to_json(stats, f'{self.out_dir}/stats.json')
         # tensorboard
         if cfg.tensorboard_each_run:
             dict_to_tb(stats, self.tb_writer, cur_epoch)
