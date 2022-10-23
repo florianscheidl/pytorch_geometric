@@ -15,6 +15,8 @@ parameters:
     values: [0,1,2,3,4]
 
   # dataset -> in the config file
+  out_dir:
+    value: results_homo_mut_pro_nci
   dataset.name:
     values: [TU_MUTAG, TU_PROTEINS, TU_NCI109]  # molhiv and molpcba still missing here.
   dataset.task:
