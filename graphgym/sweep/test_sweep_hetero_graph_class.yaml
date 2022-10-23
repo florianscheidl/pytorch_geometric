@@ -7,16 +7,16 @@ command:
   - "--repeat"
   - "1"
   - ${args_no_hyphens}
-method: grid
+method: random
 parameters:
 
   # General
   seed:
-    values: [0]
+    values: [0,1,2,3,4]
 
   # dataset -> in the config file
   dataset.name:
-    values: [TU_MUTAG, TU_ENZYMES, TU_PROTEINS, TU_NCI109] # molhiv and molpcba still missing here.
+    values: [TU_MUTAG, TU_PROTEINS, TU_NCI109]  # molhiv and molpcba still missing here.
   dataset.task:
     value: graph
   dataset.task_type:
@@ -26,27 +26,27 @@ parameters:
 
   # training
   train.batch_size:
-    value: 32
+    values: [8,16,32]
   optim.max_epoch:
-    value: 1 # default: 200
+    value: 150 # default: 200
   train.eval_period:
     value: 10
 
   # NN parameters
   gnn.act:
-    value: relu
+    values: [prelu, relu]
   gnn.batchnorm:
     value: True
 
   # GNN Specific params
   gnn.dim_inner:
-    value: 8 # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
+    values: [8,32,128] # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
   gnn.layers_pre_mp:
     value: 1
   gnn.layers_mp:
-    value: 1 # hyperparameter search
+    value: 3 # hyperparameter search
   gnn.layers_post_mp:
-    value: 1 # hyperparameter search
+    value: 2 # hyperparameter search
   gnn.stage_type:
     value: skipconcat
   model.graph_pooling:
@@ -66,7 +66,7 @@ parameters:
   lift.max_simple_cycle_length:
     value: 3
   lift.max_induced_cycle_length:
-    value: 5
+    value: 7
   lift.init_edges:
     value: True
   lift.init_rings:
@@ -81,17 +81,17 @@ parameters:
 
   # Regularization
   gnn.dropout:
-    value: "0.0" # Hyperparameter search
+    values: ["0.0","0.4"] # Hyperparameter search
 
   # Optimizer
   optim.base_lr:
-    value: 0.001
+    values: [0.005,0.001,0.0005] # Hyperparameter search
   optim.scheduler:
     value: 'fixed_step'
   optim.step_size:
-    value: 30
+    values: [30,50]
   optim.lr_decay:
-    value: 0.5
+    values: [0.1,0.5]
   optim.patience:
     value: 10
   optim.lr_scheduler_min_lr:

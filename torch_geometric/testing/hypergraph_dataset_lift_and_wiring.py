@@ -22,7 +22,7 @@ normal = True
 normal = False
 pre_transform = True
 # name='PROTEINS'
-name='ENZYMES'
+name='PROTEINS'
 # name='NCI1'
 
 if normal:
