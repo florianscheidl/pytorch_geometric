@@ -44,8 +44,8 @@ gnn:
 optim:
   optimizer: adam
   base_lr: 0.05
-  max_epoch: 2
-  scheduler: 'plateau'
+  max_epoch: 50
+  scheduler: 'fixed_step' # fixed_step, plateau
   lr_decay: 0.5
   patience: 10
   lr_scheduler_min_lr: 1e-5
