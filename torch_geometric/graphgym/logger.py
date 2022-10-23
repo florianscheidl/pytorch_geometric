@@ -227,7 +227,7 @@ class Logger(object):
         logging.info('{}: {}'.format(self.name, stats))
         # json
         while not os.path.isdir(self.out_dir):
-            UserWarning('Output directory does not exist, should have been created...')
+            UserWarning('Output directory does not exist, should have been created, waiting 100ms ...')
             time.sleep(0.1)
 
         dict_to_json(stats, f'{self.out_dir}/stats.json')
