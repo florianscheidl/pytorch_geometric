@@ -12,7 +12,7 @@ parameters:
 
   # General
   seed:
-    values: [0,1,2,3,4]
+    values: [0,1,2]
 
   # dataset -> in the config file
   out_dir:
@@ -28,7 +28,7 @@ parameters:
 
   # training
   train.batch_size:
-    values: [8,16,32]
+    value: 16
   optim.max_epoch:
     value: 150 # default: 200
   train.eval_period:
@@ -36,7 +36,7 @@ parameters:
 
   # NN parameters
   gnn.act:
-    values: [prelu, relu]
+    value: prelu
   gnn.batchnorm:
     value: True
 
@@ -87,13 +87,13 @@ parameters:
 
   # Optimizer
   optim.base_lr:
-    values: [0.005,0.001,0.0005] # Hyperparameter search
+    value: 0.001 # Hyperparameter search
   optim.scheduler:
     value: 'fixed_step'
   optim.step_size:
-    values: [30,50]
+    value: 30
   optim.lr_decay:
-    values: [0.1,0.5]
+    value: 0.1
   optim.patience:
     value: 10
   optim.lr_scheduler_min_lr:
