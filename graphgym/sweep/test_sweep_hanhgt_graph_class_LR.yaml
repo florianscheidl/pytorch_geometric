@@ -16,9 +16,9 @@ parameters:
 
   # dataset -> in the config file
   out_dir:
-    value: results_hanhgt_mut_pro_nci_LR
+    value: results_hanhgt_mut_nci_LR
   dataset.name:
-    value: TU_MUTAG # [TU_MUTAG, TU_ENZYMES, TU_PROTEINS, TU_NCI109] # molhiv and molpcba still missing here.
+    values: [TU_MUTAG, TU_NCI109] # [TU_MUTAG, TU_ENZYMES, TU_PROTEINS, TU_NCI109] # molhiv and molpcba still missing here.
   dataset.task:
     value: graph
   dataset.task_type:
@@ -30,7 +30,7 @@ parameters:
   train.batch_size:
     value: 16
   optim.max_epoch:
-    value: 150 # default: 200
+    value: 120 # default: 200
   train.eval_period:
     value: 10
 
@@ -42,7 +42,7 @@ parameters:
 
   # GNN Specific params
   gnn.dim_inner:
-    values: [8,64] # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
+    values: [64] # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
   gnn.layers_pre_mp:
     value: 1
   gnn.layers_mp:
@@ -78,20 +78,20 @@ parameters:
 
   ## choosing heterogeneous GRL architecture
   gnn.layer_type:
-    values: ['hanconv'] # hanconv, hgtconv # requires graph_type == hetero
+    values: ['heteroconv'] # hanconv, hgtconv # requires graph_type == hetero
  # add more arguments in case of using heteroconv
 
   # Regularization
   gnn.dropout:
-    values: ["0.02"] # Hyperparameter search
+    values: ["0.2"] # Hyperparameter search
 
   # Optimizer
   optim.base_lr:
-    values: ['0.005','0.001','0.0005'] # Hyperparameter search
+    values: ['0.05','0.01'] # Hyperparameter search
   optim.scheduler:
     value: 'fixed_step'
   optim.step_size:
-    values: [30,60]
+    values: [20,40]
   optim.lr_decay:
     values: ['0.1','0.5']
   optim.patience:
