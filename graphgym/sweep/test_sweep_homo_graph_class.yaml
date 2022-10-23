@@ -7,7 +7,7 @@ command:
   - "--repeat"
   - "1"
   - ${args_no_hyphens}
-method: random
+method: grid
 parameters:
 
   # General
