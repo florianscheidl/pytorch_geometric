@@ -78,14 +78,14 @@ def set_cfg_lift_wire(cfg):
     # for heteroconv -> this is quite general, so setting up the config could be lengthy
     cfg.gnn.heteroconv = CN()
     cfg.gnn.heteroconv._0_cell_0_cell = 'ginconv'
-    cfg.gnn.heteroconv._0_cell_1_cell = 'gatconv'
-    cfg.gnn.heteroconv._1_cell_0_cell = 'gatconv'
+    cfg.gnn.heteroconv._0_cell_1_cell = 'ginconv'
+    cfg.gnn.heteroconv._1_cell_0_cell = 'ginconv'
     cfg.gnn.heteroconv._1_cell_1_cell = 'ginconv'
-    cfg.gnn.heteroconv._1_cell_2_cell = 'sageconv'
-    cfg.gnn.heteroconv._2_cell_1_cell = 'sageconv'
+    cfg.gnn.heteroconv._1_cell_2_cell = 'ginconv'
+    cfg.gnn.heteroconv._2_cell_1_cell = 'ginconv'
     cfg.gnn.heteroconv._2_cell_2_cell = 'ginconv'
-    cfg.gnn.heteroconv._2_cell_3_cell = 'sageconv'
-    cfg.gnn.heteroconv._3_cell_2_cell = 'sageconv'
+    cfg.gnn.heteroconv._2_cell_3_cell = 'ginconv'
+    cfg.gnn.heteroconv._3_cell_2_cell = 'ginconv'
     cfg.gnn.heteroconv._3_cell_3_cell = 'ginconv'
 
     cfg.optim.step_size = 30
