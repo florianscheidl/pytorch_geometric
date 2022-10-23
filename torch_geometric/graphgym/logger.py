@@ -54,7 +54,7 @@ class Logger(object):
         self._epoch_total = cfg.optim.max_epoch
         self._time_total = 0  # won't be reset
 
-        self.out_dir = f'{cfg.run_dir}/{name}'
+        self.out_dir = '{}/{}'.format(cfg.run_dir, name)
         makedirs(self.out_dir)
         if cfg.tensorboard_each_run:
             from tensorboardX import SummaryWriter
