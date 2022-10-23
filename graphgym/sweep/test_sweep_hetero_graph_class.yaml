@@ -89,7 +89,7 @@ parameters:
   optim.base_lr:
     value: 0.001 # Hyperparameter search
   optim.scheduler:
-    value: 'fixed_step'
+    value: 'plateau'
   optim.step_size:
     value: 30
   optim.lr_decay:
