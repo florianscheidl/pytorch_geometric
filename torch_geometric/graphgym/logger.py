@@ -1,5 +1,6 @@
 import logging
 import math
+import os.path
 import sys
 import time
 import warnings
@@ -225,6 +226,10 @@ class Logger(object):
         # print
         logging.info('{}: {}'.format(self.name, stats))
         # json
+        while not os.path.isdir(self.out_dir):
+            UserWarning('Output directory does not exist, should have been created...')
+            time.sleep(0.1)
+
         dict_to_json(stats, f'{self.out_dir}/stats.json')
         # tensorboard
         if cfg.tensorboard_each_run:
