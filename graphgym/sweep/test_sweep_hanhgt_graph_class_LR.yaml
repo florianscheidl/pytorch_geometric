@@ -18,7 +18,7 @@ parameters:
   out_dir:
     value: results_hanhgt_mut_pro_nci_LR
   dataset.name:
-    values: [TU_MUTAG, TU_PROTEINS, TU_NCI109] # [TU_MUTAG, TU_ENZYMES, TU_PROTEINS, TU_NCI109] # molhiv and molpcba still missing here.
+    value: TU_NCI109 # [TU_MUTAG, TU_ENZYMES, TU_PROTEINS, TU_NCI109] # molhiv and molpcba still missing here.
   dataset.task:
     value: graph
   dataset.task_type:
@@ -62,7 +62,7 @@ parameters:
   lift.data_model:
     value: cell_complex
   lift.method:
-    values: [clique, rings]
+    value: rings
   lift.max_clique_dim:
     value: 3
   lift.max_simple_cycle_length:
