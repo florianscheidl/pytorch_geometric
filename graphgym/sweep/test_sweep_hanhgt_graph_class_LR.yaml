@@ -87,13 +87,13 @@ parameters:
 
   # Optimizer
   optim.base_lr:
-    value: [0.001,0.0005] # Hyperparameter search
+    value: ['0.001','0.0005'] # Hyperparameter search
   optim.scheduler:
     value: 'fixed_step'
   optim.step_size:
     value: [10,30]
   optim.lr_decay:
-    value: [0.1,0.5]
+    value: ['0.1','0.5']
   optim.patience:
     value: 10
   optim.lr_scheduler_min_lr:
