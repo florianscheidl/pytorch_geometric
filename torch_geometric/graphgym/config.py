@@ -561,7 +561,7 @@ def set_run_dir(out_dir):
         fname (string): Filename for the yaml format configuration file
 
     """
-    cfg.run_dir = os.path.join(out_dir, str(cfg.seed))
+    cfg.run_dir = os.path.join(out_dir, str(cfg.seed), str(cfg.gnn.layer_type))
     # Make output directory
     if cfg.train.auto_resume:
         os.makedirs(cfg.run_dir, exist_ok=True)
