@@ -66,11 +66,11 @@ parameters:
   lift.method:
     value: clique
   lift.max_clique_dim:
-    value: 3
+    value: 0
   lift.max_simple_cycle_length:
-    value: 3
+    value: 0
   lift.max_induced_cycle_length:
-    value: 5
+    value: 0
   lift.init_edges:
     value: True
   lift.init_rings:

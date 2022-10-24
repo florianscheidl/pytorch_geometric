@@ -137,8 +137,12 @@ class Planetoid(InMemoryDataset):
 
     @property
     def processed_file_names(self) -> str:
-        return 'data.pt'
-
+        if self.pre_transform is not None and hasattr(self.pre_transform,'lift'):
+            lift = self.pre_transform.lift
+            f = f'{lift.lift_method}_{lift.max_induced_cycle_length}_{lift.max_simple_cycle_length}_data.pt'
+        else:
+            f = 'data.pt'
+        return f
     def download(self):
         for name in self.raw_file_names:
             download_url(f'{self.url}/{name}', self.raw_dir)
