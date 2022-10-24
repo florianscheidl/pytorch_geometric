@@ -26,12 +26,12 @@ class GraphGymModule(LightningModule):
     def configure_optimizers(self):
         optimizer = create_optimizer(self.model.parameters(), self.cfg.optim)
         scheduler = create_scheduler(optimizer, self.cfg.optim)
-        # monitor = self.cfg.optim.monitor if hasattr(self.cfg.optim,'monitor') else None
-        # if monitor is not None:
-        #     return dict(optimizer=optimizer, lr_scheduler=scheduler, monitor=monitor)
-        # else:
-        #     return dict(optimizer=optimizer, lr_scheduler=scheduler)
-        return [optimizer], [scheduler]
+        monitor = self.cfg.optim.monitor if hasattr(self.cfg.optim,'monitor') else None
+        if monitor is not None:
+            return dict(optimizer=optimizer, lr_scheduler=scheduler, monitor=monitor)
+        else:
+            return dict(optimizer=optimizer, lr_scheduler=scheduler)
+        # return [optimizer], [scheduler]
 
 
     def _shared_step(self, batch, split: str) -> Dict:
