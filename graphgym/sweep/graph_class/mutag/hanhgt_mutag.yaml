@@ -3,7 +3,7 @@ command:
   - ${interpreter}
   - ${program}
   - "--cfg"
-  - "graphgym/configs/homo_AULT_node_class.yaml"
+  - "graphgym/configs/hetero_AULT_graph_class.yaml"
   - "--repeat"
   - "1"
   - ${args_no_hyphens}
@@ -16,21 +16,19 @@ parameters:
 
   # dataset -> in the config file
   out_dir:
-    value: results_homo_citeseer
+    value: results_hanhgt_mutag
   dataset.name:
-    value: CiteSeer
+    value: TU_MUTAG # [TU_MUTAG, TU_ENZYMES, TU_PROTEINS, TU_NCI109] # molhiv and molpcba still missing here.
   dataset.task:
-    value: node
-  dataset.transductive:
-    value: true
+    value: graph
   dataset.task_type:
     value: classification
   dataset.pre_transform:
-    value: None # 'lift_and_wire'
+    value: lift_and_wire # 'lift_and_wire'
 
   # training
   train.batch_size:
-    value: 32
+    value: 16
   optim.max_epoch:
     value: 150 # default: 200
   train.eval_period:
@@ -44,7 +42,7 @@ parameters:
 
   # GNN Specific params
   gnn.dim_inner:
-    value: 64 # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
+    values: [64] # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
   gnn.layers_pre_mp:
     value: 1
   gnn.layers_mp:
@@ -54,23 +52,23 @@ parameters:
   gnn.stage_type:
     value: skipconcat
   model.graph_pooling:
-    value: add
+    value: hetero_add_pooling
 
   # Model-specific GNN params:
   gnn.graph_type:
-    value: homo
+    value: hetero
 
   ## lifting:
   lift.data_model:
     value: cell_complex
   lift.method:
-    value: clique
+    values: [clique, rings]
   lift.max_clique_dim:
     value: 3
   lift.max_simple_cycle_length:
     value: 3
   lift.max_induced_cycle_length:
-    value: 5
+    value: 7
   lift.init_edges:
     value: True
   lift.init_rings:
@@ -80,12 +78,12 @@ parameters:
 
   ## choosing heterogeneous GRL architecture
   gnn.layer_type:
-    values: ['gcnconv', 'ginconv', 'gatconv' ,'sageconv'] # hanconv, hgtconv # requires graph_type == hetero
+    values: ['hanconv', 'hgtconv'] # hanconv, hgtconv # requires graph_type == hetero
  # add more arguments in case of using heteroconv
 
   # Regularization
   gnn.dropout:
-    value: "0.0" # Hyperparameter search
+    values: ["0.0"] # Hyperparameter search
 
   # Optimizer
   optim.base_lr:

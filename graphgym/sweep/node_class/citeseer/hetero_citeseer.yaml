@@ -12,11 +12,13 @@ parameters:
 
   # General
   seed:
-    values: [0]
+    values: [0,1,2]
 
   # dataset -> in the config file
+  out_dir:
+    value: results_hetero_citeseer
   dataset.name:
-    values: [Cora, CiteSeer, PubMed]
+    value: CiteSeer
   dataset.task:
     value: node
   dataset.task_type:
@@ -30,25 +32,25 @@ parameters:
   train.batch_size:
     value: 32
   optim.max_epoch:
-    value: 1 # default: 200
+    value: 150 # default: 200
   train.eval_period:
     value: 10
 
   # NN parameters
   gnn.act:
-    value: relu
+    value: prelu
   gnn.batchnorm:
     value: True
 
   # GNN Specific params
   gnn.dim_inner:
-    value: 8 # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
+    value: 64 # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
   gnn.layers_pre_mp:
     value: 1
   gnn.layers_mp:
-    value: 1 # hyperparameter search
+    value: 3 # hyperparameter search
   gnn.layers_post_mp:
-    value: 1 # hyperparameter search
+    value: 2 # hyperparameter search
   gnn.stage_type:
     value: skipconcat
   model.graph_pooling:
@@ -68,7 +70,7 @@ parameters:
   lift.max_simple_cycle_length:
     value: 3
   lift.max_induced_cycle_length:
-    value: 5
+    value: 7
   lift.init_edges:
     value: True
   lift.init_rings:
@@ -87,13 +89,13 @@ parameters:
 
   # Optimizer
   optim.base_lr:
-    value: 0.001
+    value: '0.001'
   optim.scheduler:
     value: 'fixed_step'
   optim.step_size:
-    value: 30
+    value: 150
   optim.lr_decay:
-    value: 0.5
+    value: '0.5'
   optim.patience:
     value: 10
   optim.lr_scheduler_min_lr:

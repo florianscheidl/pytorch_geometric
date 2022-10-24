@@ -15,6 +15,8 @@ parameters:
     values: [0,1,2]
 
   # dataset -> in the config file
+  out_dir:
+    value: results_homo_cora
   dataset.name:
     value: Cora
   dataset.task:
@@ -87,13 +89,13 @@ parameters:
 
   # Optimizer
   optim.base_lr:
-    value: 0.001
+    value: '0.001'
   optim.scheduler:
     value: 'fixed_step'
   optim.step_size:
     value: 150
   optim.lr_decay:
-    value: 0.5
+    value: '0.5'
   optim.patience:
     value: 10
   optim.lr_scheduler_min_lr:
