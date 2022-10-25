@@ -73,13 +73,10 @@ def load_pyg(name, dataset_dir, pre_transform=None, transform=None):
         # TU_IMDB doesn't have node features - neither does TU_PROTEINS
         if name[3:] == 'IMDB-MULTI':
             name = 'IMDB-MULTI'
-            dataset = TUDataset(dataset_dir, name, pre_transform=T.compose([T.OneHotDegree(max_degree=1000), pre_transform])) if pre_transform is not None else TUDataset(dataset_dir, name, pre_transform=T.OneHotDegree(max_degree=10000))
-        elif name[3:] == 'PROTEINS':
-            name = 'PROTEINS'
-            dataset = TUDataset(dataset_dir, name, pre_transform=T.compose([T.OneHotDegree(max_degree=1000), pre_transform])) if pre_transform is not None else TUDataset(dataset_dir, name, pre_transform=T.OneHotDegree(max_degree=10000))
+            dataset = TUDataset(dataset_dir, name, pre_transform=T.compose([T.OneHotDegree(max_degree=352), pre_transform])) if pre_transform is not None else TUDataset(dataset_dir, name, pre_transform=T.OneHotDegree(max_degree=352)) # max degree taken from network repository
         elif name[3:].startswith('REDDIT'):
             name = 'REDDIT-MULTI-5K'
-            dataset = TUDataset(dataset_dir, name, pre_transform=T.compose([T.OneHotDegree(max_degree=1000), pre_transform])) if pre_transform is not None else TUDataset(dataset_dir, name, pre_transform=T.OneHotDegree(max_degree=100000))
+            dataset = TUDataset(dataset_dir, name, pre_transform=T.compose([T.OneHotDegree(max_degree=8000), pre_transform])) if pre_transform is not None else TUDataset(dataset_dir, name, pre_transform=T.OneHotDegree(max_degree=8000)) # max degree taken from network repository
         else:
             dataset = TUDataset(dataset_dir, name[3:], pre_transform=pre_transform) # TODO: could also put the transform here.
     elif name == 'Karate':
@@ -104,7 +101,7 @@ def load_pyg(name, dataset_dir, pre_transform=None, transform=None):
         dataset = QM9(dataset_dir, pre_transform=pre_transform)
     else:
         raise ValueError('{} not support'.format(name))
-
+    print('Stop!')
     return dataset
 
 

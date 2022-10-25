@@ -117,7 +117,7 @@ class TUDataset(InMemoryDataset):
                  transform: Optional[Callable] = None,
                  pre_transform: Optional[Callable] = None,
                  pre_filter: Optional[Callable] = None,
-                 use_node_attr: bool = False, use_edge_attr: bool = False,
+                 use_node_attr: bool = True, use_edge_attr: bool = True,
                  cleaned: bool = False):
         self.name = name
         self.cleaned = cleaned
