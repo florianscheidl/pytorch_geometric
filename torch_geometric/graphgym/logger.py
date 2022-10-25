@@ -227,7 +227,7 @@ class Logger(object):
         logging.info('{}: {}'.format(self.name, stats))
         # json
         if not os.path.isdir(self.out_dir):
-            UserWarning('Output directory does not exist, should have been created, waiting 100ms ...')
+            makedirs(self.out_dir)
 
         dict_to_json(stats, f'{self.out_dir}/stats.json')
         # tensorboard
