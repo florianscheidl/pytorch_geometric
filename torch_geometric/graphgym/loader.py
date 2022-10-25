@@ -70,12 +70,18 @@ def load_pyg(name, dataset_dir, pre_transform=None, transform=None):
     if name in ['Cora', 'CiteSeer', 'PubMed']:
         dataset = Planetoid(dataset_dir, name, pre_transform=pre_transform)
     elif name[:3] == 'TU_':
-        # TU_IMDB doesn't have node features
-        if name[3:] == 'IMDB':
+        # TU_IMDB doesn't have node features - neither does TU_PROTEINS
+        if name[3:] == 'IMDB-MULTI':
             name = 'IMDB-MULTI'
-            dataset = TUDataset(dataset_dir, name, pre_transform=T.compose([T.Constant, pre_transform]))
+            dataset = TUDataset(dataset_dir, name, pre_transform=T.compose([T.OneHotDegree(max_degree=1000), pre_transform])) if pre_transform is not None else TUDataset(dataset_dir, name, pre_transform=T.OneHotDegree(max_degree=10000))
+        elif name[3:] == 'PROTEINS':
+            name = 'PROTEINS'
+            dataset = TUDataset(dataset_dir, name, pre_transform=T.compose([T.OneHotDegree(max_degree=1000), pre_transform])) if pre_transform is not None else TUDataset(dataset_dir, name, pre_transform=T.OneHotDegree(max_degree=10000))
+        elif name[3:].startswith('REDDIT'):
+            name = 'REDDIT-MULTI-5K'
+            dataset = TUDataset(dataset_dir, name, pre_transform=T.compose([T.OneHotDegree(max_degree=1000), pre_transform])) if pre_transform is not None else TUDataset(dataset_dir, name, pre_transform=T.OneHotDegree(max_degree=100000))
         else:
-            dataset = TUDataset(dataset_dir, name[3:], pre_transform=pre_transform) if pre_transform is not None else TUDataset(dataset_dir, name[3:], transform=transform) # TODO: could also put the transform here.
+            dataset = TUDataset(dataset_dir, name[3:], pre_transform=pre_transform) # TODO: could also put the transform here.
     elif name == 'Karate':
         dataset = KarateClub(pre_transform=pre_transform)
     elif 'Coauthor' in name:
