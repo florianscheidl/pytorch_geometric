@@ -48,7 +48,7 @@ parameters:
   gnn.layers_mp:
     values: [3,4] # hyperparameter search
   gnn.layers_post_mp:
-    value: [1,2] # hyperparameter search
+    values: [1,2] # hyperparameter search
   gnn.stage_type:
     value: skipconcat
   model.graph_pooling:
