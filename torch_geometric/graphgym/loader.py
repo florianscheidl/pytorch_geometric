@@ -20,7 +20,7 @@ from torch_geometric.datasets import (
 )
 from torch_geometric.graphgym.config import cfg
 from torch_geometric.transforms.liwich_transforms import LiftAndWire
-import torch_geometric.transforms as T
+from torch_geometric.transforms import Compose
 import torch_geometric.transforms.lifts as lifts
 import torch_geometric.transforms.wirings as wirings
 from torch_geometric.graphgym.models.transform import (
@@ -73,10 +73,13 @@ def load_pyg(name, dataset_dir, pre_transform=None, transform=None):
         # TU_IMDB doesn't have node features - neither does TU_PROTEINS
         if name[3:] == 'IMDB-MULTI':
             name = 'IMDB-MULTI'
-            dataset = TUDataset(dataset_dir, name, pre_transform=T.compose([T.OneHotDegree(max_degree=352), pre_transform])) if pre_transform is not None else TUDataset(dataset_dir, name, pre_transform=T.OneHotDegree(max_degree=352)) # max degree taken from network repository
+            dataset = TUDataset(dataset_dir, name, pre_transform=Compose([T.OneHotDegree(max_degree=352), pre_transform])) if pre_transform is not None else TUDataset(dataset_dir, name, pre_transform=T.OneHotDegree(max_degree=352)) # max degree taken from network repository
+        elif name[3:] == 'IMDB-BINARY':
+            name = 'IMDB-BINARY'
+            dataset = TUDataset(dataset_dir, name, pre_transform=Compose([T.OneHotDegree(max_degree=352), pre_transform])) if pre_transform is not None else TUDataset(dataset_dir, name, pre_transform=T.OneHotDegree(max_degree=352)) # max degree taken from network repository
         elif name[3:].startswith('REDDIT'):
             name = 'REDDIT-MULTI-5K'
-            dataset = TUDataset(dataset_dir, name, pre_transform=T.compose([T.OneHotDegree(max_degree=8000), pre_transform])) if pre_transform is not None else TUDataset(dataset_dir, name, pre_transform=T.OneHotDegree(max_degree=8000)) # max degree taken from network repository
+            dataset = TUDataset(dataset_dir, name, pre_transform=Compose([T.OneHotDegree(max_degree=8000), pre_transform])) if pre_transform is not None else TUDataset(dataset_dir, name, pre_transform=T.OneHotDegree(max_degree=8000)) # max degree taken from network repository
         else:
             dataset = TUDataset(dataset_dir, name[3:], pre_transform=pre_transform) # TODO: could also put the transform here.
     elif name == 'Karate':
@@ -230,7 +233,8 @@ def lift_wire_transform_formatter(name, dataset_dir, pre_transform=None, transfo
     else:
         raise NotImplementedError
     if cfg.lift.data_model == "cell_complex":
-        wiring = wirings.HypergraphWiring(cfg.wiring.adjacency_types)
+        print(f"Add metapaths with {cfg.wiring.max_hops_from_source} intermediate hops from source.") if cfg.wiring.max_hops_from_source is not None else print(f"Add metapaths with all intermediate hops.")
+        wiring = wirings.HypergraphWiring(cfg.wiring.adjacency_types, max_hops_from_source=cfg.wiring.max_hops_from_source)
     else:
         raise NotImplementedError
     pre_transform = LiftAndWire(lift, wiring) if pre_transform is not None else pre_transform

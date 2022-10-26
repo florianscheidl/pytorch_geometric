@@ -16,9 +16,9 @@ parameters:
 
   # dataset -> in the config file
   out_dir:
-    value: results_hanhgt_proteins
+    value: results_hanhgt_imdb_b
   dataset.name:
-    value: TU_PROTEINS # [TU_MUTAG, TU_ENZYMES, TU_PROTEINS, TU_NCI109] # molhiv and molpcba still missing here.
+    value: TU_IMDB-BINARY # [TU_MUTAG, TU_ENZYMES, TU_PROTEINS, TU_NCI109] # molhiv and molpcba still missing here.
   dataset.task:
     value: graph
   dataset.task_type:
@@ -42,7 +42,7 @@ parameters:
 
   # GNN Specific params
   gnn.dim_inner:
-    values: [32] # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
+    values: [16] # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
   gnn.layers_pre_mp:
     value: 1
   gnn.layers_mp:
@@ -52,7 +52,7 @@ parameters:
   gnn.stage_type:
     value: skipconcat
   model.graph_pooling:
-    value: hetero_add_pooling
+    value: hetero_add_pooling # Experiment 3
 
   # Model-specific GNN params:
   gnn.graph_type:
@@ -89,11 +89,11 @@ parameters:
 
   # Optimizer
   optim.base_lr:
-    value: '0.01'
+    value: '0.001'
   optim.scheduler:
     value: 'fixed_step'
   optim.step_size:
-    value: 20
+    value: 50
   optim.lr_decay:
     value: '0.5'
   optim.patience:

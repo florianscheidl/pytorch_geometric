@@ -45,6 +45,9 @@ def set_cfg_lift_wire(cfg):
 
     cfg.wiring.adjacency_types = ["boundary", "upper"]
 
+    # When adding metapaths, do we add edges between intermediate hops and the destination?
+    cfg.wiring.max_hops_from_source = None
+
     # Maybe add this later: would require a few changes in the Hypergraph Wiring class
     # cfg.wiring.drop_orig_edges = False
     # cfg.wiring.drop_unconnected_nodes = False

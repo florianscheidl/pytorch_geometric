@@ -16,9 +16,9 @@ parameters:
 
   # dataset -> in the config file
   out_dir:
-    value: results_hanhgt_proteins
+    value: results_hanhgt_nci109
   dataset.name:
-    value: TU_PROTEINS # [TU_MUTAG, TU_ENZYMES, TU_PROTEINS, TU_NCI109] # molhiv and molpcba still missing here.
+    value: TU_NCI109 # [TU_MUTAG, TU_ENZYMES, TU_PROTEINS, TU_NCI109] # molhiv and molpcba still missing here.
   dataset.task:
     value: graph
   dataset.task_type:
@@ -28,7 +28,7 @@ parameters:
 
   # training
   train.batch_size:
-    value: 128
+    value: 32
   optim.max_epoch:
     value: 150 # default: 200
   train.eval_period:
@@ -42,7 +42,7 @@ parameters:
 
   # GNN Specific params
   gnn.dim_inner:
-    values: [32] # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
+    values: [64] # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
   gnn.layers_pre_mp:
     value: 1
   gnn.layers_mp:
@@ -89,7 +89,7 @@ parameters:
 
   # Optimizer
   optim.base_lr:
-    value: '0.01'
+    value: '0.001'
   optim.scheduler:
     value: 'fixed_step'
   optim.step_size:

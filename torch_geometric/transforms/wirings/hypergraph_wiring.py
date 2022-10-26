@@ -8,13 +8,15 @@ from torch_sparse import SparseTensor
 from torch_geometric.data import HeteroData
 from torch_geometric.data.custom_complex import Complex
 from torch_geometric.transforms.add_metapaths_hops import AddMetaPathsHops
+from torch_geometric.transforms import AddMetaPaths
 from torch_geometric.transforms.wirings import WiringTransform
 
 
 class HypergraphWiring(WiringTransform):
-    def __init__(self, adjacency_types: List[str] = ["boundary", "upper"], boundary_adjacency_tensors: List[SparseTensor] = None):
+    def __init__(self, adjacency_types: List[str] = ["boundary", "upper"], boundary_adjacency_tensors: List[SparseTensor] = None, **kwargs):
         self.adjacency_types = adjacency_types
         self.boundary_adjacency_tensors = boundary_adjacency_tensors
+        self.max_hops_from_source = kwargs.get("max_hops_from_source", None)
         super().__init__(self.adjacency_types, self.boundary_adjacency_tensors)
 
     def __call__(self, data: Complex) -> HeteroData:
@@ -56,12 +58,15 @@ class HypergraphWiring(WiringTransform):
                 if [(f"{d+1}_cell", "coboundary_of", f"{d}_cell"), (f"{d}_cell", "boundary_of", f"{d + 1}_cell")] not in metapaths:
                     metapaths.append([(f"{d+1}_cell", "coboundary_of", f"{d}_cell"), (f"{d}_cell", "boundary_of", f"{d + 1}_cell")])
 
+
+        # print(f"Add metapaths with {self.max_hops_from_source} intermediate hops from source.") if self.max_hops_from_source is not None else print(f"Add metapaths with all intermediate hops.")
         het_data = AddMetaPathsHops(metapaths,
                                     drop_orig_edges=False,
                                     keep_same_node_type=True,
                                     drop_unconnected_nodes=False,
                                     max_sample=10000,
-                                    weighted=False)(het_data)
+                                    weighted=False,
+                                    max_hops_from_source=self.max_hops_from_source)(het_data)
 
         # TODO: remove the to_dense potentially transform node_stores to SparseTensor (temporarily removed)
         # This is a temporary fix to avoid the error caused by collate

@@ -12,13 +12,13 @@ parameters:
 
   # General
   seed:
-    values: [0,1,2]
+    values: [10,11,12,13]
 
   # dataset -> in the config file
   out_dir:
-    value: results_homo_ptc_mr
+    value: results_homo_nci1
   dataset.name:
-    value: TU_NCI109  # molhiv and molpcba still missing here.
+    value: TU_NCI1  # molhiv and molpcba still missing here.
   dataset.task:
     value: graph
   dataset.task_type:
@@ -28,7 +28,7 @@ parameters:
 
   # training
   train.batch_size:
-    value: 16
+    value: 32
   optim.max_epoch:
     value: 150 # default: 200
   train.eval_period:
@@ -36,19 +36,19 @@ parameters:
 
   # NN parameters
   gnn.act:
-    value: prelu
+    value: relu
   gnn.batchnorm:
     value: True
 
   # GNN Specific params
   gnn.dim_inner:
-    values: [64] # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
+    values: [16] # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
   gnn.layers_pre_mp:
     value: 1
   gnn.layers_mp:
-    value: 3 # hyperparameter search
+    values: [3,4] # hyperparameter search
   gnn.layers_post_mp:
-    value: 2 # hyperparameter search
+    value: [1,2] # hyperparameter search
   gnn.stage_type:
     value: skipconcat
   model.graph_pooling:
@@ -58,24 +58,6 @@ parameters:
   gnn.graph_type:
     value: homo
 
-  ## lifting:
-  lift.data_model:
-    value: cell_complex
-  lift.method:
-    value: clique
-  lift.max_clique_dim:
-    value: 3
-  lift.max_simple_cycle_length:
-    value: 3
-  lift.max_induced_cycle_length:
-    value: 5
-  lift.init_edges:
-    value: True
-  lift.init_rings:
-    value: True
-  lift.init_method:
-    value: sum
-
   ## choosing heterogeneous GRL architecture
   gnn.layer_type:
     values: ['gcnconv', 'ginconv', 'gatconv' ,'sageconv'] # hanconv, hgtconv # requires graph_type == hetero
@@ -83,7 +65,7 @@ parameters:
 
   # Regularization
   gnn.dropout:
-    values: ["0.0"] # Hyperparameter search
+    values: ["0.5"] # Hyperparameter search
 
   # Optimizer
   optim.base_lr:
@@ -91,7 +73,7 @@ parameters:
   optim.scheduler:
     value: 'fixed_step'
   optim.step_size:
-    value: 150
+    value: 20
   optim.lr_decay:
     value: '0.5'
   optim.patience:

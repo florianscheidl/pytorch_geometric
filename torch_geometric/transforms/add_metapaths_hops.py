@@ -106,6 +106,7 @@ class AddMetaPathsHops(BaseTransform):
             drop_unconnected_nodes: bool = False,
             max_sample: Optional[int] = None,
             weighted: bool = False,
+            max_hops_from_source: Optional[int] = None,
     ):
 
         for path in metapaths:
@@ -120,6 +121,7 @@ class AddMetaPathsHops(BaseTransform):
         self.drop_unconnected_nodes = drop_unconnected_nodes
         self.max_sample = max_sample
         self.weighted = weighted
+        self.max_hops_from_source = max_hops_from_source
 
     def __call__(self, data: HeteroData) -> HeteroData:
         edge_types = data.edge_types  # save original edge types
@@ -171,8 +173,8 @@ class AddMetaPathsHops(BaseTransform):
             from_node_type = edge_type[0]
 
             sources, targets = adj1.storage.row().tolist(), adj1.storage.col().tolist() # TODO
-            listy = [[(edge_type[0], sources[w]), (edge_type[2], targets[w])] for w in range(len(targets))]
-            metawalks = metawalks+listy # TODO
+            # listy = [[(edge_type[0], sources[w]), (edge_type[2], targets[w])] for w in range(len(targets))]
+            # metawalks = metawalks+listy # TODO
 
             if self.max_sample is not None:
                 adj1 = self.sample_adj(adj1)
@@ -198,16 +200,17 @@ class AddMetaPathsHops(BaseTransform):
                 # one_hop_adjacencies.append((adj2, dist_adj_1, edge_type)) # TODO
                 sources, targets = adj2.storage.row().tolist(), adj2.storage.col().tolist()
 
-                new_walks = []
-                for walk in metawalks:
-                    if (walk[0][0] == edge_type[2]):
-                        new_sources = []
-                        for p in range(len(targets)):
-                            if targets[p] == walk[0][1]: # if edge target coincides with source of walk, we add this source node of this edge to the walk.
-                                new_sources.append(sources[p])
-                        for new_source in new_sources:
-                            new_walks.append([(edge_type[0], new_source)] + walk)
-                metawalks = metawalks+new_walks
+                # TODO: add metawalk functionality later
+                # new_walks = []
+                # for walk in metawalks:
+                #     if (walk[0][0] == edge_type[2]):
+                #         new_sources = []
+                #         for p in range(len(targets)):
+                #             if targets[p] == walk[0][1]: # if edge target coincides with source of walk, we add this source node of this edge to the walk.
+                #                 new_sources.append(sources[p])
+                #         for new_source in new_sources:
+                #             new_walks.append([(edge_type[0], new_source)] + walk)
+                # metawalks = metawalks+new_walks
 
                 # update current walk matrix, corresponding to number of walks from current edge type to target following metapath.
                 adj1 = adj2 @ adj1
@@ -232,7 +235,9 @@ class AddMetaPathsHops(BaseTransform):
             adjacencies_node_to_target.remove(adjacencies_node_to_target[-1])
             adjacency_next = None
 
-            for (adj, m, from_node_type) in (reversed(adjacencies_node_to_target)):
+            chosen_adjacencies_node_to_target = adjacencies_node_to_target[:min(len(adjacencies_node_to_target), self.max_hops_from_source)] if self.max_hops_from_source is not None else adjacencies_node_to_target
+
+            for (adj, m, from_node_type) in (reversed(chosen_adjacencies_node_to_target)):
                 idx = metapath_length-m-1
 
                 # replace this with one_hop adjacencies later. TODO
@@ -261,22 +266,22 @@ class AddMetaPathsHops(BaseTransform):
                 # data.metapath_dict[new_edge_type] = metapath
 
             # only keep metawalks of length of metapath+1 (i.e. delete all intermediate walks)
-            cutoff_metawalks = [metawalk for metawalk in metawalks if (len(metawalk)==metapath_length+1)]
-            metawalks = cutoff_metawalks
+            # cutoff_metawalks = [metawalk for metawalk in metawalks if (len(metawalk)==metapath_length+1)]
+            # metawalks = cutoff_metawalks
 
             dest_node_type = metapath[-1][-1]
             num_nodes_type = data[dest_node_type].num_nodes # maybe size()[1] instead?
 
             # walk_info = {data[dest_node_type].unique_id[x]: [] for x in range(num_nodes_type)}
-            walk_info = [[] for x in range(num_nodes_type)]
-
-            for metawalk in metawalks:
-                assert (dest_node_type==metawalk[-1][0])
-                metawalk_id = "".join(str(node[0][0:min(2,len(node[0]))]+"_"+str(node[1])+"->") for node in metawalk)
-                if metawalk_id not in walk_info[metawalk[-1][1]]:
-                    walk_info[metawalk[-1][1]].append(metawalk_id)
-
-            data[dest_node_type].walks = walk_info
+            # walk_info = [[] for x in range(num_nodes_type)]
+            #
+            # for metawalk in metawalks:
+            #     assert (dest_node_type==metawalk[-1][0])
+            #     metawalk_id = "".join(str(node[0][0:min(2,len(node[0]))]+"_"+str(node[1])+"->") for node in metawalk)
+            #     if metawalk_id not in walk_info[metawalk[-1][1]]:
+            #         walk_info[metawalk[-1][1]].append(metawalk_id)
+            #
+            # data[dest_node_type].walks = walk_info
             # Currently, we store the metawalk information in the target node type. TODO: store in edge type.
 
         ## ************************************************************************ ##

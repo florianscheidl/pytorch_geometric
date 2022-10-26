@@ -3,7 +3,7 @@ command:
   - ${interpreter}
   - ${program}
   - "--cfg"
-  - "graphgym/configs/hetero_AULT_graph_class.yaml"
+  - "graphgym/configs/homo_AULT_graph_class.yaml"
   - "--repeat"
   - "1"
   - ${args_no_hyphens}
@@ -16,15 +16,15 @@ parameters:
 
   # dataset -> in the config file
   out_dir:
-    value: results_hanhgt_proteins
+    value: results_homo_imdb_b
   dataset.name:
-    value: TU_PROTEINS # [TU_MUTAG, TU_ENZYMES, TU_PROTEINS, TU_NCI109] # molhiv and molpcba still missing here.
+    value: TU_IMDB-BINARY  # molhiv and molpcba still missing here.
   dataset.task:
     value: graph
   dataset.task_type:
     value: classification
   dataset.pre_transform:
-    value: lift_and_wire # 'lift_and_wire'
+    value: None # 'lift_and_wire'
 
   # training
   train.batch_size:
@@ -42,7 +42,7 @@ parameters:
 
   # GNN Specific params
   gnn.dim_inner:
-    values: [32] # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
+    values: [16] # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
   gnn.layers_pre_mp:
     value: 1
   gnn.layers_mp:
@@ -52,36 +52,16 @@ parameters:
   gnn.stage_type:
     value: skipconcat
   model.graph_pooling:
-    value: hetero_add_pooling
+    value: add
 
   # Model-specific GNN params:
   gnn.graph_type:
-    value: hetero
-
-  ## lifting:
-  lift.data_model:
-    value: cell_complex
-  lift.method:
-    values: [clique, rings]
-  lift.max_clique_dim:
-    value: 3
-  lift.max_simple_cycle_length:
-    value: 3
-  lift.max_induced_cycle_length:
-    value: 8
-  lift.init_edges:
-    value: True
-  lift.init_rings:
-    value: True
-  lift.init_method:
-    value: mean
-  wiring.max_hops_from_source:
-    value: 2
+    value: homo
 
   ## choosing heterogeneous GRL architecture
   gnn.layer_type:
-    values: ['hanconv', 'hgtconv'] # hanconv, hgtconv # requires graph_type == hetero
- # add more arguments in case of using heteroconv
+    values: ['gcnconv', 'ginconv', 'gatconv' ,'sageconv'] # hanconv, hgtconv # requires graph_type == hetero
+  # add more arguments in case of using heteroconv
 
   # Regularization
   gnn.dropout:
@@ -89,11 +69,11 @@ parameters:
 
   # Optimizer
   optim.base_lr:
-    value: '0.01'
+    value: '0.001'
   optim.scheduler:
     value: 'fixed_step'
   optim.step_size:
-    value: 20
+    value: 50
   optim.lr_decay:
     value: '0.5'
   optim.patience:

@@ -12,7 +12,7 @@ parameters:
 
   # General
   seed:
-    values: [0,1,2]
+    values: [10,11,12,13]
 
   # dataset -> in the config file
   out_dir:
@@ -28,7 +28,7 @@ parameters:
 
   # training
   train.batch_size:
-    value: 16
+    value: 128
   optim.max_epoch:
     value: 150 # default: 200
   train.eval_period:
@@ -36,7 +36,7 @@ parameters:
 
   # NN parameters
   gnn.act:
-    value: prelu
+    value: relu
   gnn.batchnorm:
     value: True
 
@@ -46,9 +46,9 @@ parameters:
   gnn.layers_pre_mp:
     value: 1
   gnn.layers_mp:
-    value: 3 # hyperparameter search
+    values: [3,4] # hyperparameter search
   gnn.layers_post_mp:
-    value: 2 # hyperparameter search
+    values: [1,2] # hyperparameter search
   gnn.stage_type:
     value: skipconcat
   model.graph_pooling:
@@ -68,13 +68,15 @@ parameters:
   lift.max_simple_cycle_length:
     value: 3
   lift.max_induced_cycle_length:
-    value: 7
+    value: 8
   lift.init_edges:
     value: True
   lift.init_rings:
     value: True
   lift.init_method:
-    value: sum
+    value: mean
+  wiring.max_hops_from_source:
+    value: 2
 
   ## choosing heterogeneous GRL architecture
   gnn.layer_type:
@@ -83,15 +85,15 @@ parameters:
 
   # Regularization
   gnn.dropout:
-    values: ["0.0"] # Hyperparameter search
+    values: ["0.5"] # Hyperparameter search
 
   # Optimizer
   optim.base_lr:
-    value: '0.001'
+    value: '0.0005'
   optim.scheduler:
     value: 'fixed_step'
   optim.step_size:
-    value: 150
+    value: 20
   optim.lr_decay:
     value: '0.5'
   optim.patience:

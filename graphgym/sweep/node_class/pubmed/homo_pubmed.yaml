@@ -12,7 +12,7 @@ parameters:
 
   # General
   seed:
-    values: [0,1,2]
+    values: [10,11,12,13]
 
   # dataset -> in the config file
   out_dir:
@@ -44,13 +44,13 @@ parameters:
 
   # GNN Specific params
   gnn.dim_inner:
-    value: 64 # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
+    values: [32,64] # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
   gnn.layers_pre_mp:
     value: 1
   gnn.layers_mp:
-    value: 3 # hyperparameter search
+    values: [3,4] # hyperparameter search
   gnn.layers_post_mp:
-    value: 2 # hyperparameter search
+    values: [1,2] # hyperparameter search
   gnn.stage_type:
     value: skipconcat
   model.graph_pooling:
@@ -60,24 +60,6 @@ parameters:
   gnn.graph_type:
     value: homo
 
-  ## lifting:
-  lift.data_model:
-    value: cell_complex
-  lift.method:
-    value: clique
-  lift.max_clique_dim:
-    value: 3
-  lift.max_simple_cycle_length:
-    value: 3
-  lift.max_induced_cycle_length:
-    value: 5
-  lift.init_edges:
-    value: True
-  lift.init_rings:
-    value: True
-  lift.init_method:
-    value: sum
-
   ## choosing heterogeneous GRL architecture
   gnn.layer_type:
     values: ['gcnconv', 'ginconv', 'gatconv' ,'sageconv'] # hanconv, hgtconv # requires graph_type == hetero
@@ -85,15 +67,15 @@ parameters:
 
   # Regularization
   gnn.dropout:
-    value: "0.0" # Hyperparameter search
+    value: "0.3" # Hyperparameter search
 
   # Optimizer
   optim.base_lr:
-    value: '0.001'
+    value: '0.01'
   optim.scheduler:
     value: 'fixed_step'
   optim.step_size:
-    value: 150
+    value: 20
   optim.lr_decay:
     value: '0.5'
   optim.patience:
