@@ -46,7 +46,7 @@ parameters:
   gnn.layers_pre_mp:
     value: 1
   gnn.layers_mp:
-    values: [3,6] # hyperparameter search
+    values: [3] # hyperparameter search
   gnn.layers_post_mp:
     values: [2] # hyperparameter search
   gnn.stage_type:
