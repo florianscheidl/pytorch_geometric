@@ -64,7 +64,7 @@ parameters:
   lift.data_model:
     value: cell_complex
   lift.method:
-    values: [clique] # [clique, rings]
+    values: [rings] # [clique, rings]
   lift.max_clique_dim:
     value: 3
   lift.max_simple_cycle_length:
