@@ -44,11 +44,11 @@ parameters:
 
   # GNN Specific params
   gnn.dim_inner:
-    values: [32,64] # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
+    values: [64] # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
   gnn.layers_pre_mp:
     value: 1
   gnn.layers_mp:
-    values: [3,6] # hyperparameter search
+    values: [3] # hyperparameter search
   gnn.layers_post_mp:
     values: [2] # hyperparameter search
   gnn.stage_type:
