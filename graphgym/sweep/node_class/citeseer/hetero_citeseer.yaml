@@ -91,11 +91,11 @@ parameters:
 
   # Optimizer
   optim.base_lr:
-    value: '0.01'
+    value: '0.02'
   optim.scheduler:
     value: 'fixed_step'
   optim.step_size:
-    value: 20
+    value: 40
   optim.lr_decay:
     value: '0.5'
   optim.patience:
