@@ -70,7 +70,7 @@ parameters:
   lift.max_simple_cycle_length:
     value: 3
   lift.max_induced_cycle_length:
-    value: 8
+    value: 5
   lift.init_edges:
     value: True
   lift.init_rings:
