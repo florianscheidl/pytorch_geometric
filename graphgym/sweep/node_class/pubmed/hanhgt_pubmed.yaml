@@ -95,7 +95,7 @@ parameters:
   optim.scheduler:
     value: 'fixed_step'
   optim.step_size:
-    value: 40
+    value: 20
   optim.lr_decay:
     value: '0.5'
   optim.patience:

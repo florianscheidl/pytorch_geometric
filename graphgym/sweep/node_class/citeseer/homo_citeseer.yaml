@@ -48,7 +48,7 @@ parameters:
   gnn.layers_pre_mp:
     value: 1
   gnn.layers_mp:
-    values: [3,6] # hyperparameter search
+    values: [3] # hyperparameter search
   gnn.layers_post_mp:
     values: [2] # hyperparameter search
   gnn.stage_type:
@@ -75,7 +75,7 @@ parameters:
   optim.scheduler:
     value: 'fixed_step'
   optim.step_size:
-    value: 40
+    value: 20
   optim.lr_decay:
     value: '0.5'
   optim.patience:

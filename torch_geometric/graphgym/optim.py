@@ -6,7 +6,7 @@ from torch.optim import SGD, Adam, Optimizer
 from torch.optim.lr_scheduler import CosineAnnealingLR, MultiStepLR, StepLR
 
 import torch_geometric.graphgym.register as register
-from torch_geometric.graphgym.config import from_config
+from torch_geometric.graphgym.config import from_config, cfg
 
 
 @dataclass
@@ -54,8 +54,8 @@ def none_scheduler(optimizer: Optimizer, max_epoch: int) -> StepLR:
 
 
 @register.register_scheduler('fixed_step')
-def fixed_step_scheduler(optimizer: Optimizer, step_size: int, max_epoch: int) -> StepLR:
-    return StepLR(optimizer, step_size=step_size)
+def fixed_step_scheduler(optimizer: Optimizer, step_size: int, lr_decay: float, max_epoch: int) -> StepLR:
+    return StepLR(optimizer, step_size=step_size, gamma=lr_decay)
 
 
 @register.register_scheduler('step')
