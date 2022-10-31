@@ -59,8 +59,6 @@ parameters:
   # Model-specific GNN params:
   gnn.graph_type:
     value: hetero
-  optim.weight_decay:
-    values: ["0.0001","0.001","0.01"] # Hyperparameter search
 
   ## lifting:
   lift.data_model:
@@ -89,7 +87,7 @@ parameters:
 
   # Regularization
   gnn.dropout:
-    value: ["0.4","0.6","0.8"] # Hyperparameter search
+    values: ["0.4","0.6","0.8"] # Hyperparameter search
 
   # Optimizer
   optim.base_lr:
