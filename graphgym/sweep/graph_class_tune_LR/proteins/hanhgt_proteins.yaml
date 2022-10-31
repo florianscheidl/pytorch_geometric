@@ -12,7 +12,7 @@ parameters:
 
   # General
   seed:
-    values: [7,8]
+    values: [10,11,12,13,14,15,16,17,18,19]
 
   # dataset -> in the config file
   out_dir:
@@ -42,7 +42,7 @@ parameters:
 
   # GNN Specific params
   gnn.dim_inner:
-    values: [64,128] # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
+    values: 32 # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
   gnn.layers_pre_mp:
     value: 1
   gnn.layers_mp:
@@ -85,11 +85,11 @@ parameters:
 
   # Regularization
   gnn.dropout:
-    values: ["0.4"] # Hyperparameter search
+    value: "0.0" # Hyperparameter search
 
   # Optimizer
   optim.base_lr:
-    values: ['0.01','0.02']
+    value: '0.01'
   optim.scheduler:
     value: 'fixed_step'
   optim.step_size:
