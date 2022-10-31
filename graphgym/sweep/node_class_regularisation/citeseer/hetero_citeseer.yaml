@@ -3,7 +3,7 @@ command:
   - ${interpreter}
   - ${program}
   - "--cfg"
-  - "graphgym/configs/homo_AULT_graph_class.yaml"
+  - "graphgym/configs/hetero_AULT_node_class.yaml"
   - "--repeat"
   - "1"
   - ${args_no_hyphens}
@@ -12,19 +12,21 @@ parameters:
 
   # General
   seed:
-    values: [10,11,12,13]
+    values: [10]
 
   # dataset -> in the config file
   out_dir:
-    value: results_homo_mutag
+    value: results_hetero_citeseer
   dataset.name:
-    value: TU_MUTAG  # molhiv and molpcba still missing here.
+    value: CiteSeer
   dataset.task:
-    value: graph
+    value: node
   dataset.task_type:
     value: classification
+  dataset.transductive:
+    value: true
   dataset.pre_transform:
-    value: None # 'lift_and_wire'
+    value: lift_and_wire # 'lift_and_wire'
 
   # training
   train.batch_size:
@@ -36,7 +38,7 @@ parameters:
 
   # NN parameters
   gnn.act:
-    value: relu
+    value: prelu
   gnn.batchnorm:
     value: True
 
@@ -52,24 +54,46 @@ parameters:
   gnn.stage_type:
     value: skipconcat
   model.graph_pooling:
-    value: add
+    value: hetero_add_pooling
 
   # Model-specific GNN params:
   gnn.graph_type:
-    value: homo
+    value: hetero
+  optim.weight_decay:
+    values: ["0.0001","0.001","0.01"] # Hyperparameter search
+
+  ## lifting:
+  lift.data_model:
+    value: cell_complex
+  lift.method:
+    values: [clique, rings] # [clique, rings]
+  lift.max_clique_dim:
+    value: 3
+  lift.max_simple_cycle_length:
+    value: 3
+  lift.max_induced_cycle_length:
+    value: 5
+  lift.init_edges:
+    value: True
+  lift.init_rings:
+    value: True
+  lift.init_method:
+    value: mean
+  wiring.max_hops_from_source:
+    value: 2
 
   ## choosing heterogeneous GRL architecture
   gnn.layer_type:
-    values: ['gcnconv', 'ginconv', 'gatconv' ,'sageconv'] # hanconv, hgtconv # requires graph_type == hetero
-  # add more arguments in case of using heteroconv
+    value: 'heteroconv' # hanconv, hgtconv # requires graph_type == hetero
+ # add more arguments in case of using heteroconv
 
   # Regularization
   gnn.dropout:
-    values: ["0.5"] # Hyperparameter search
+    value: "0.2" # Hyperparameter search
 
   # Optimizer
   optim.base_lr:
-    values: ['0.01']
+    value: '0.02'
   optim.scheduler:
     value: 'fixed_step'
   optim.step_size:

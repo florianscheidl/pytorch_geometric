@@ -19,7 +19,6 @@ lift_wire = LiftAndWire(lifting_cell, wiring)
 #load example dataset with the given transform
 
 normal = True
-normal = False
 pre_transform = True
 # name='PROTEINS'
 name='PROTEINS'

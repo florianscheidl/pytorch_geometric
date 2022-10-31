@@ -12,7 +12,7 @@ parameters:
 
   # General
   seed:
-    values: [10,11,12,13]
+    values: [10]
 
   # dataset -> in the config file
   out_dir:
@@ -69,7 +69,7 @@ parameters:
 
   # Optimizer
   optim.base_lr:
-    values: ['0.01']
+    values: ['0.005', '0.01', '0.05', '0.1']
   optim.scheduler:
     value: 'fixed_step'
   optim.step_size:
