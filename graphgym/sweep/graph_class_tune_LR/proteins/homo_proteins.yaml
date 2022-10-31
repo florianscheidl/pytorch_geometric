@@ -1,0 +1,82 @@
+program: graphgym/liwich_main.py
+command:
+  - ${interpreter}
+  - ${program}
+  - "--cfg"
+  - "graphgym/configs/homo_AULT_graph_class.yaml"
+  - "--repeat"
+  - "1"
+  - ${args_no_hyphens}
+method: grid
+parameters:
+
+  # General
+  seed:
+    values: [10,11,12,13]
+
+  # dataset -> in the config file
+  out_dir:
+    value: results_homo_proteins
+  dataset.name:
+    value: TU_PROTEINS  # molhiv and molpcba still missing here.
+  dataset.task:
+    value: graph
+  dataset.task_type:
+    value: classification
+  dataset.pre_transform:
+    value: None # 'lift_and_wire'
+
+  # training
+  train.batch_size:
+    value: 128
+  optim.max_epoch:
+    value: 150 # default: 200
+  train.eval_period:
+    value: 10
+
+  # NN parameters
+  gnn.act:
+    value: relu
+  gnn.batchnorm:
+    value: True
+
+  # GNN Specific params
+  gnn.dim_inner:
+    values: [32] # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
+  gnn.layers_pre_mp:
+    value: 1
+  gnn.layers_mp:
+    values: [3] # hyperparameter search
+  gnn.layers_post_mp:
+    values: [2] # hyperparameter search
+  gnn.stage_type:
+    value: skipconcat
+  model.graph_pooling:
+    value: add
+
+  # Model-specific GNN params:
+  gnn.graph_type:
+    value: homo
+
+  ## choosing heterogeneous GRL architecture
+  gnn.layer_type:
+    values: ['gcnconv', 'ginconv', 'gatconv' ,'sageconv'] # hanconv, hgtconv # requires graph_type == hetero
+  # add more arguments in case of using heteroconv
+
+  # Regularization
+  gnn.dropout:
+    values: ["0.0"] # Hyperparameter search
+
+  # Optimizer
+  optim.base_lr:
+    value: '0.01'
+  optim.scheduler:
+    value: 'fixed_step'
+  optim.step_size:
+    value: 20
+  optim.lr_decay:
+    value: '0.5'
+  optim.patience:
+    value: 10
+  optim.lr_scheduler_min_lr:
+    value: 1e-5
