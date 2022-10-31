@@ -42,7 +42,7 @@ parameters:
 
   # GNN Specific params
   gnn.dim_inner:
-    values: [16] # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
+    values: [32,64] # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
   gnn.layers_pre_mp:
     value: 1
   gnn.layers_mp:
@@ -65,11 +65,11 @@ parameters:
 
   # Regularization
   gnn.dropout:
-    values: ["0.0"] # Hyperparameter search
+    values: ["0.4"] # Hyperparameter search
 
   # Optimizer
   optim.base_lr:
-    values: ['0.0005','0.005','0.01','0.05']
+    values: ['0.01'] # ["0.01"]
   optim.scheduler:
     value: 'fixed_step'
   optim.step_size:
