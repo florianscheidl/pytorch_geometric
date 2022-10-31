@@ -44,7 +44,7 @@ parameters:
 
   # GNN Specific params
   gnn.dim_inner:
-    values: [16,32,64] # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
+    values: [64] # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
   gnn.layers_pre_mp:
     value: 1
   gnn.layers_mp:
@@ -67,7 +67,7 @@ parameters:
 
   # Regularization
   gnn.dropout:
-    value: "0.2" # Hyperparameter search
+    values: ["0.0","0.2",'0.4','0.6'] # Hyperparameter search
   optim.weight_decay:
     value: "0.0001" # Hyperparameter search
 
