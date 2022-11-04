@@ -1,0 +1,102 @@
+program: graphgym/liwich_main.py
+command:
+  - ${interpreter}
+  - ${program}
+  - "--cfg"
+  - "graphgym/configs/hetero_AULT_graph_class.yaml"
+  - "--repeat"
+  - "1"
+  - ${args_no_hyphens}
+method: grid
+parameters:
+
+  # General
+  seed:
+    values: [12]
+
+  # dataset -> in the config file
+  out_dir:
+    value: results_hanhgt_imdb_multi
+  dataset.name:
+    value: TU_IMDB-MULTI # [TU_MUTAG, TU_ENZYMES, TU_PROTEINS, TU_NCI109] # molhiv and molpcba still missing here.
+  dataset.task:
+    value: graph
+  dataset.task_type:
+    value: classification
+  dataset.pre_transform:
+    value: lift_and_wire # 'lift_and_wire'
+
+  # training
+  train.batch_size:
+    value: 128
+  optim.max_epoch:
+    value: 150 # default: 200
+  train.eval_period:
+    value: 10
+
+  # NN parameters
+  gnn.act:
+    value: relu
+  gnn.batchnorm:
+    value: True
+
+  # GNN Specific params
+  gnn.dim_inner:
+    values: [64] # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
+  gnn.layers_pre_mp:
+    value: 1
+  gnn.layers_mp:
+    values: [3] # hyperparameter search
+  gnn.layers_post_mp:
+    values: [2] # hyperparameter search
+  gnn.stage_type:
+    value: skipconcat
+  model.graph_pooling:
+    value: hetero_add_pooling
+
+  # Model-specific GNN params:
+  gnn.graph_type:
+    value: hetero
+
+  ## lifting:
+  lift.data_model:
+    value: cell_complex
+  lift.method:
+    values: [clique, rings]
+  lift.max_clique_dim:
+    value: 2
+  lift.max_simple_cycle_length:
+    value: 3
+  lift.max_induced_cycle_length:
+    value: 8
+  lift.init_edges:
+    value: True
+  lift.init_rings:
+    value: True
+  lift.init_method:
+    value: mean
+  wiring.max_hops_from_source:
+    value: 2
+
+  ## choosing heterogeneous GRL architecture
+  gnn.layer_type:
+    values: ['hanconv', 'hgtconv'] # hanconv, hgtconv # requires graph_type == hetero
+ # add more arguments in case of using heteroconv
+
+  # Regularization
+  gnn.dropout:
+    values: ["0.5"] # Hyperparameter search
+
+  # Optimizer
+  optim.base_lr:
+    values: ['0.01'] # 0.005 or 0.1
+  optim.scheduler:
+    value: 'fixed_step'
+  optim.step_size:
+    value: 20
+  optim.lr_decay:
+    value: '0.5'
+  optim.patience:
+    value: 10
+  optim.lr_scheduler_min_lr:
+    value: 1e-5
