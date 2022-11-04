@@ -62,7 +62,7 @@ parameters:
   lift.data_model:
     value: cell_complex
   lift.method:
-    values: [clique, rings]
+    values: [rings]
   lift.max_clique_dim:
     value: 2
   lift.max_simple_cycle_length:
@@ -80,7 +80,7 @@ parameters:
 
   ## choosing heterogeneous GRL architecture
   gnn.layer_type:
-    values: ['hanconv', 'hgtconv'] # hanconv, hgtconv # requires graph_type == hetero
+    values: ['hgtconv'] # hanconv, hgtconv # requires graph_type == hetero
  # add more arguments in case of using heteroconv
 
   # Regularization
