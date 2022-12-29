@@ -28,7 +28,8 @@ parameters:
   dataset.pre_transform:
     value: lift_and_wire # 'lift_and_wire'
 
-  # training
+  # training32
+
   train.batch_size:
     value: 32
   optim.max_epoch:

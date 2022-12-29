@@ -1,4 +1,4 @@
-program: graphgym/liwich_main.py
+3program: graphgym/liwich_main.py
 command:
   - ${interpreter}
   - ${program}
