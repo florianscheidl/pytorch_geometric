@@ -1,0 +1,57 @@
+# The recommended basic settings for GNN
+accelerator: 'cuda'
+devices: 1
+out_dir: results
+use_wandb: False
+dataset:
+  format: PyG
+  name: TU_MUTAG                      # for TUDatasets, the format is TU_{NAME}, e.g. TU_MUTAG, TU_PTC_FM, TU_PROTEINS,
+  task: graph                         # graph or node (linked to dataset)
+  task_type: classification           # classification or regression (linked to dataset)
+  transductive: false                 # true for node classification, false otherwise
+  split: [0.8, 0.1, 0.1]              # Training-validation-test split
+  pre_transform: "lift_and_wire"
+  transform: None # none
+lift:
+  data_model: cell_complex            # cell_complex
+  init_edges: True
+  init_rings: True
+  init_method: sum                    # sum or mean
+  method: rings                       # rings or clique
+  max_induced_cycle_length: 5         # any positive integer >=3
+wiring:
+  adjacency_types: ["boundary","upper"]   # List[str]: may contain all, one or none of "boundary","upper"
+train:
+  batch_size: 16
+  eval_period: 50 # TODO: what does this mean?
+  ckpt_period: 100 # TODO: what does this mean?
+model:
+  type: gnn
+  loss_fun: cross_entropy             # cross_entropy (for classification), or mse (for regression)
+  graph_pooling: hetero_add_pooling   # hetero_add_pooling (for graph_type: "hetero") or add (for graph_type: "homo")
+gnn:
+  graph_type: "hetero"                # hetero or homo
+  layers_pre_mp: 1
+  layers_mp: 3 # hyperparameter search
+  layers_post_mp: 1 # hyperparameter search
+  dim_inner: 8 # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
+  layer_type: hgtconv                 # hanconv or hgtconv or heteroconv (require graph_type: "hetero"), graph convolution from https://pytorch-geometric.readthedocs.io/en/latest/notes/cheatsheet.html otherwise
+  stage_type: skipconcat
+  batchnorm: true
+  act: prelu                          # prelu or relu
+  dropout: 0.2
+  agg: add
+  normalize_adj: false # TODO: not sure if applicable
+  heteroconv:                         # in case layer_type: heteroconv, this determines the bipartite graph convolution applied for the specific adjacencies
+                                      # convolutions which support bipartite graphs can be chosen from https://pytorch-geometric.readthedocs.io/en/latest/notes/cheatsheet.html
+    _0_cell_0_cell: 'gatconv'
+    _0_cell_1_cell: 'gatconv'
+    _1_cell_0_cell: 'gatconv'
+    _1_cell_1_cell: 'gatconv'
+    _1_cell_2_cell: 'gatconv'
+    _2_cell_1_cell: 'gatconv'
+    _2_cell_2_cell: 'gatconv'
+optim:
+  optimizer: adam
+  base_lr: 0.05
+  max_epoch: 200

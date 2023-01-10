@@ -125,6 +125,7 @@ class AddMetaPathsHops(BaseTransform):
 
     def __call__(self, data: HeteroData) -> HeteroData:
         edge_types = data.edge_types  # save original edge types
+
         # data.metapath_dict = {}  # do not seem to use this, maybe just for debugging?
 
         ## ************************************************************************ ##

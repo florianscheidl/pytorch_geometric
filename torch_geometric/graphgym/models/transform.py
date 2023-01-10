@@ -1,11 +1,6 @@
 import torch
 
 from torch_geometric.utils import negative_sampling
-from torch_geometric.transforms.liwich_transforms import LiftAndWire
-from torch_geometric.transforms.lifts import LiftTransform
-from torch_geometric.transforms.wirings import WiringTransform
-
-
 
 
 def create_link_label(pos_edge_index, neg_edge_index):

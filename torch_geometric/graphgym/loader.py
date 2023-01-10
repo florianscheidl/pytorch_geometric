@@ -19,7 +19,7 @@ from torch_geometric.datasets import (
     TUDataset,
 )
 from torch_geometric.graphgym.config import cfg
-from torch_geometric.transforms.liwich_transforms import LiftAndWire
+from torch_geometric.transforms.liwip_transforms import LiftAndWire
 from torch_geometric.transforms import Compose
 import torch_geometric.transforms.lifts as lifts
 import torch_geometric.transforms.wirings as wirings
