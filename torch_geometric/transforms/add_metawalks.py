@@ -148,6 +148,11 @@ class AddMetaPathsHops(BaseTransform):
             node_type_abbrev = [metapath[0][0][0]]+[edge_type[2][0] for edge_type in metapath] # list of (first letters of) node-types along the metapath for easy labelling of metapath
             metapath_abbrev = ''.join(node_type_abbrev) # join abbreviations, e.g. author->paper->conference->paper becomes apcp.
 
+            # assert that edge-types are present
+            for edge_type in metapath:
+                assert data._to_canonical(
+                    edge_type) in edge_types, f"'{edge_type}' not present"
+
             # Go through edge types in the metapath backwards (from target to source), store the adjacency matrices in a list
             adjacencies_node_to_target : List[tuple[SparseTensor,int,str]] = [] # tracks adjacencies to target node following a walk along metapath, integer tracks the length of the walk
 
@@ -165,7 +170,7 @@ class AddMetaPathsHops(BaseTransform):
             dist_adj_1 = 1
             from_node_type = edge_type[0]
 
-            # sources, targets = adj1.storage.row().tolist(), adj1.storage.col().tolist() # TODO
+            sources, targets = adj1.storage.row().tolist(), adj1.storage.col().tolist() # TODO
             # listy = [[(edge_type[0], sources[w]), (edge_type[2], targets[w])] for w in range(len(targets))]
             # metawalks = metawalks+listy # TODO
 
@@ -174,7 +179,7 @@ class AddMetaPathsHops(BaseTransform):
 
             adjacencies_node_to_target.append((adj1, dist_adj_1, from_node_type))
 
-            # one_hop_adjacencies = [] # TODO
+            one_hop_adjacencies = [] # TODO
             # Go through remaining edge types from target to source
             for edge_type in reversed(metapath[:-1]):
 
@@ -191,9 +196,9 @@ class AddMetaPathsHops(BaseTransform):
                     adj2.edge_attr = edge_weight
 
                 # one_hop_adjacencies.append((adj2, dist_adj_1, edge_type)) # TODO
-                # sources, targets = adj2.storage.row().tolist(), adj2.storage.col().tolist()
+                sources, targets = adj2.storage.row().tolist(), adj2.storage.col().tolist()
 
-                # Old version (adding metawalks)
+                # TODO: add metawalk functionality later
                 # new_walks = []
                 # for walk in metawalks:
                 #     if (walk[0][0] == edge_type[2]):
@@ -225,7 +230,7 @@ class AddMetaPathsHops(BaseTransform):
             # data.metapath_dict[new_edge_type] = metapath
 
             # add metapath edges for intermediate nodes (weights correspond to the number of walks from source via intermediate node to target following a metapath walk)
-            adjacencies_node_to_target.remove(adjacencies_node_to_target[-1]) # we have already added source -> target metapath edges
+            adjacencies_node_to_target.remove(adjacencies_node_to_target[-1])
             adjacency_next = None
 
             chosen_adjacencies_node_to_target = adjacencies_node_to_target[:min(len(adjacencies_node_to_target), self.max_hops_from_source)] if self.max_hops_from_source is not None else adjacencies_node_to_target
@@ -239,7 +244,7 @@ class AddMetaPathsHops(BaseTransform):
                                                          sparse_sizes=data[metapath[idx]].size(),
                                                          edge_attr=self._get_edge_weight(data, metapath[idx]))
                 else:
-                    adjacency_curr = data[metapath[idx]].edge_index # was previously incorrectly data[edge_type].edge_index
+                    adjacency_curr = data[edge_type].edge_index
                     adjacency_curr.edge_attr = self._get_edge_weight(data, metapath[idx])
 
                 # row_curr, col_curr, edge_weight_curr = adjacency_curr.coo()

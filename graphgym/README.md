@@ -18,7 +18,7 @@ We ran our experiments using Python 3.10. We use Conda environments and assume t
 3. Alternatively, you can use the CPU-version of PyTorch. The corresponding Conda environment can be installed with
 
     ```
-   $ conda env create --file pyg_LOCAL.yaml --name pyg_CPU
+   $ conda env create --file pyg_CPU.yaml --name pyg_CPU
    ```    
 
 ### Running a single experiment
