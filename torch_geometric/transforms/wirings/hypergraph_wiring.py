@@ -8,7 +8,7 @@ from torch_sparse import SparseTensor
 from torch_geometric.data import HeteroData
 from torch_geometric.data.custom_complex import Complex
 from torch_geometric.transforms.add_metapaths_hops import AddMetaPathsHops
-from torch_geometric.transforms import AddMetaPaths
+from torch_geometric.transforms import AddMetaPaths2
 from torch_geometric.transforms.wirings import WiringTransform
 
 
@@ -60,13 +60,21 @@ class HypergraphWiring(WiringTransform):
 
 
         # print(f"Add metapaths with {self.max_hops_from_source} intermediate hops from source.") if self.max_hops_from_source is not None else print(f"Add metapaths with all intermediate hops.")
-        het_data = AddMetaPathsHops(metapaths,
+        # het_data = AddMetaPathsHops(metapaths,
+        #                             drop_orig_edges=False,
+        #                             keep_same_node_type=True,
+        #                             drop_unconnected_nodes=False,
+        #                             max_sample=10000,
+        #                             weighted=False,
+        #                             max_hops_from_source=self.max_hops_from_source)(het_data)
+
+        # add metapaths (without intermediate hops)
+        het_data = AddMetaPaths2(metapaths,
                                     drop_orig_edges=False,
                                     keep_same_node_type=True,
                                     drop_unconnected_nodes=False,
                                     max_sample=10000,
-                                    weighted=False,
-                                    max_hops_from_source=self.max_hops_from_source)(het_data)
+                                    weighted=False)(het_data)
 
         # TODO: remove the to_dense potentially transform node_stores to SparseTensor (temporarily removed)
         # This is a temporary fix to avoid the error caused by collate

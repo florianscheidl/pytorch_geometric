@@ -18,7 +18,7 @@ lift:
   method: rings                       # rings or clique
   max_induced_cycle_length: 5         # any positive integer >=3
 wiring:
-  adjacency_types: ["boundary","upper"]   # List[str]: may contain all, one or none of "boundary","upper"
+  adjacency_types: ["boundary","upper","lower"]   # List[str]: may contain all, one or none of "boundary","upper"
 train:
   batch_size: 16
   eval_period: 50 # TODO: what does this mean?
@@ -33,7 +33,7 @@ gnn:
   layers_mp: 3 # hyperparameter search
   layers_post_mp: 1 # hyperparameter search
   dim_inner: 8 # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
-  layer_type: hgtconv                 # hanconv or hgtconv or heteroconv (require graph_type: "hetero"), graph convolution from https://pytorch-geometric.readthedocs.io/en/latest/notes/cheatsheet.html otherwise
+  layer_type: hetero                 # hanconv or hgtconv or heteroconv (require graph_type: "hetero"), graph convolution from https://pytorch-geometric.readthedocs.io/en/latest/notes/cheatsheet.html otherwise
   stage_type: skipconcat
   batchnorm: true
   act: prelu                          # prelu or relu
@@ -42,13 +42,13 @@ gnn:
   normalize_adj: false # TODO: not sure if applicable
   heteroconv:                         # in case layer_type: heteroconv, this determines the bipartite graph convolution applied for the specific adjacencies
                                       # convolutions which support bipartite graphs can be chosen from https://pytorch-geometric.readthedocs.io/en/latest/notes/cheatsheet.html
-    _0_cell_0_cell: 'gatconv'
-    _0_cell_1_cell: 'gatconv'
-    _1_cell_0_cell: 'gatconv'
-    _1_cell_1_cell: 'gatconv'
-    _1_cell_2_cell: 'gatconv'
-    _2_cell_1_cell: 'gatconv'
-    _2_cell_2_cell: 'gatconv'
+    _0_cell_0_cell: 'ginconv'
+    _0_cell_1_cell: 'ginconv'
+    _1_cell_0_cell: 'ginconv'
+    _1_cell_1_cell: 'ginconv'
+    _1_cell_2_cell: 'ginconv'
+    _2_cell_1_cell: 'ginconv'
+    _2_cell_2_cell: 'ginconv'
 optim:
   optimizer: adam
   base_lr: 0.05
