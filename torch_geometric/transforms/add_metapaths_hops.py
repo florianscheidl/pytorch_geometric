@@ -127,11 +127,11 @@ class AddMetaPathsHops(BaseTransform):
         edge_types = data.edge_types  # save original edge types
 
         # Add unique IDs to every node
-        if 'unique_ids' not in data.stores:
-            next_id = 0
-            for node_type in data.node_types:
-                data[node_type].unique_ids = range(next_id, next_id + data[node_type].num_nodes)
-                next_id += data[node_type].num_nodes # TODO: this requires that num_nodes is inferred correctly.
+        # if 'unique_ids' not in data.stores:
+        #     next_id = 0
+        #     for node_type in data.node_types:
+        #         data[node_type].unique_ids = range(next_id, next_id + data[node_type].num_nodes)
+        #         next_id += data[node_type].num_nodes # TODO: this requires that num_nodes is inferred correctly.
 
 
         # new implementation: reverse through metapaths and track number of walks that pass through metapaths
