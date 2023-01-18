@@ -209,7 +209,12 @@ def build_tables(simplex_tree, size):
         # id_maps[dim][tuple(simplex)] = next_id
         # next_id += 1
 
+        # Original implementation of next_id
         next_id = len(simplex_tables[dim])
+
+        # new implementation with unique ids per dimension:
+        #next_id = sum([len(simplex_tables[dim]) for dim in range(len(simplex_tables))])
+
         id_maps[dim][tuple(simplex)] = next_id
 
         simplex_tables[dim].append(simplex)

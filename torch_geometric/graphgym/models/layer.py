@@ -236,7 +236,7 @@ class Linear(nn.Module):
         self.layer_config = layer_config
 
     def forward(self, batch):
-        if self.layer_config.graph_type=='hetero':
+        if self.layer_config.graph_type.startswith('hetero'):
             batch.x_dict = {key: self.model(batch.x_dict[key]) for key in batch.x_dict.keys()}
         else:
             if isinstance(batch, torch.Tensor):

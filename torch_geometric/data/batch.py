@@ -82,6 +82,16 @@ class Batch(metaclass=DynamicInheritance):
             exclude_keys=exclude_keys,
         )
 
+        # # UNCOMMENT BLOCK ABOVE and comment this one for original liwip implementation (with addmetahops) to work
+        # batch, slice_dict, inc_dict = collate(
+        #     cls,
+        #     data_list=data_list,
+        #     increment=False,
+        #     add_batch=not isinstance(data_list[0], Batch),
+        #     follow_batch=follow_batch,
+        #     exclude_keys=exclude_keys,
+        # )
+
         batch._num_graphs = len(data_list)
         batch._slice_dict = slice_dict
         batch._inc_dict = inc_dict
@@ -108,6 +118,16 @@ class Batch(metaclass=DynamicInheritance):
             inc_dict=self._inc_dict,
             decrement=True,
         )
+
+        # # UNCOMMENT BLOCK ABOVE and comment this one for original liwip implementation (with addmetahops) to work
+        # data = separate(
+        #     cls=self.__class__.__bases__[-1],
+        #     batch=self,
+        #     idx=idx,
+        #     slice_dict=self._slice_dict,
+        #     inc_dict=self._inc_dict,
+        #     decrement=False,
+        # )
 
         return data
 

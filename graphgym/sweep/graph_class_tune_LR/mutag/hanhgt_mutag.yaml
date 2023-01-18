@@ -1,9 +1,9 @@
-program: graphgym/liwich_main.py
+program: liwich_main.py
 command:
   - ${interpreter}
   - ${program}
   - "--cfg"
-  - "graphgym/configs/hetero_AULT_graph_class.yaml"
+  - "configs/hetero_AULT_graph_class.yaml"
   - "--repeat"
   - "1"
   - ${args_no_hyphens}
