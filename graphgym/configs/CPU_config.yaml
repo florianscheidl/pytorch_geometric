@@ -18,11 +18,11 @@ lift:
   method: rings                       # rings or clique
   max_induced_cycle_length: 5         # any positive integer >=3
 wiring:
-  adjacency_types: ["boundary","upper","lower"]   # List[str]: may contain all, one or none of "boundary","upper"
+  adjacency_types: ["boundary","upper","lower"]   # List[str]: may contain all, one or none of "boundary","upper","lower"
 train:
   batch_size: 16
-  eval_period: 50 # TODO: what does this mean?
-  ckpt_period: 100 # TODO: what does this mean?
+  eval_period: 50
+  ckpt_period: 100
 model:
   type: gnn
   loss_fun: cross_entropy             # cross_entropy (for classification), or mse (for regression)
@@ -33,7 +33,7 @@ gnn:
   layers_mp: 3 # hyperparameter search
   layers_post_mp: 1 # hyperparameter search
   dim_inner: 8 # give as list of length # total layers - 1 or dict {pre_inner: [], mp_inner: [], post_inner: []}
-  layer_type: hetero                 # hanconv or hgtconv or heteroconv (require graph_type: "hetero"), graph convolution from https://pytorch-geometric.readthedocs.io/en/latest/notes/cheatsheet.html otherwise
+  layer_type: hgtconv                 # hanconv or hgtconv or heteroconv (require graph_type: "hetero"), graph convolution from https://pytorch-geometric.readthedocs.io/en/latest/notes/cheatsheet.html otherwise
   stage_type: skipconcat
   batchnorm: true
   act: prelu                          # prelu or relu

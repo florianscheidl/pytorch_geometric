@@ -124,7 +124,7 @@ class GeneralLayer(nn.Module):
         else:
             self.layer = register.layer_dict[name](layer_config, **kwargs)
         layer_wrapper = []
-        if self.has_bn and cfg.gnn.graph_type!='hetero':
+        if self.has_bn and not cfg.gnn.graph_type.startswith('hetero'):
             layer_wrapper.append(
                 nn.BatchNorm1d(layer_config.dim_out, eps=layer_config.bn_eps,
                                momentum=layer_config.bn_mom))

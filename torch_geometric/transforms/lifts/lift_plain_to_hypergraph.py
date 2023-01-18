@@ -149,7 +149,7 @@ class LiftGraphToCellComplex(LiftTransform):
             return lifted_data
 
         else:
-            return Exception(f'Lift method not implemented. Please choose one of: "inclusion", "rings".')
+            return Exception(f'Lift method not implemented. Please choose one of: "inclusion", "clique", "rings".')
 
 
 # **********************************************************************************************************************
@@ -548,7 +548,12 @@ def build_tables_with_rings(edge_index, simplex_tree, size, max_simple_k, max_in
         cell_tables += [[]]
         assert len(cell_tables) == 3, cell_tables
         for cell in rings:
+
+            # original
             next_id = len(cell_tables[2])
+
+            # unique ids --> causes problems in collate ...
+            # next_id = len(cell_tables[2])+max([max(list(id_maps[i].values())) for i in range(len(id_maps)-1)])+1
             id_maps[2][cell] = next_id
             next_id += 1
             cell_tables[2].append(list(cell))
@@ -700,9 +705,13 @@ def compute_ring_2complex(data: Data,
 
             # Build edge feature matrix
             max_id = max(ex.keys())
+            # min_id = min(ex.keys())
             edge_feats = []
             assert len(cell_tables[1]) == max_id + 1
+            #assert len(cell_tables[1]) == max_id-min_id + 1
+
             for id in range(max_id + 1):
+            #for id in range(min_id, max_id + 1):
                 edge_feats.append(ex[id])
             xs[1] = torch.stack(edge_feats, dim=0)
             assert xs[1].dim() == 2

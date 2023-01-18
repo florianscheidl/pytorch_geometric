@@ -19,7 +19,7 @@ class HypergraphWiring(WiringTransform):
         self.max_hops_from_source = kwargs.get("max_hops_from_source", None)
         super().__init__(self.adjacency_types, self.boundary_adjacency_tensors)
 
-    def __call__(self, data: Complex) -> HeteroData:
+    def __call__(self, data: Complex) -> HeteroData: #, multiple_node_types: bool = False)
 
         # Initialise the heteroData object
         het_data = HeteroData()
@@ -31,11 +31,20 @@ class HypergraphWiring(WiringTransform):
 
         # Add higher-order vertices (HoVs) and their features:
         for chain in data.cochains:
-            for key in data.cochains[chain].keys:
+            # if multiple_node_types:
+                for key in data.cochains[chain].keys:
                     het_data[f"{data.cochains[chain].dim}_cell"][key] = data.cochains[chain][key]
                     het_data[f"{data.cochains[chain].dim}_cell"].num_nodes = data.cochains[chain].num_cells
+            # else:
+            #     if "_Cochain__x" in "_Cochain__x":
+            #         het_data["cell"]["_Cochain__x"] = data.cochains[chain]["_Cochain__x"]
+            #     else:
+            #         het_data["cell"]["_Cochain__x"] = torch.cat([het_data["cell"]["_Cochain__x"],data.cochains[chain]["_Cochain__x"]])
 
-                    # Add higher-order edges (HoEs)
+        # Add higher-order edges (HoEs)
+
+        # multiple node types -> iterate through cell dimensions and add heterogeneous edges, which depend on node type
+        # if multiple_node_types:
         for d in range(het_data.dimension):
             if "boundary" not in self.adjacency_types:
                 raise Exception("Require boundary adjacency.")
@@ -44,11 +53,24 @@ class HypergraphWiring(WiringTransform):
                     d].storage.col()
                 het_data[f"{d}_cell", "boundary_of", f"{d + 1}_cell"].edge_index = SparseTensor(row=boundaries,
                                                                                                 col=cells)
-                het_data[f"{d + 1}_cell", "coboundary_of", f"{d}_cell"].edge_index = SparseTensor(row=cells,
-                                                                                                  col=boundaries)
+                het_data[f"{d + 1}_cell", "coboundary_of", f"{d}_cell"].edge_index = SparseTensor(row=cells,col=boundaries)
+
+        # single node type: all boundaries are collected in the same edge_index --> purpose: parameter sharing in heterogeneous GNN architectures
+        # else:
+        #     boundaries_list, cells_list = [], []
+        #     for d in range(het_data.dimension):
+        #         boundaries_list.append(self.boundary_adjacency_tensors[d].storage.row())
+        #         cells_list.append(self.boundary_adjacency_tensors[d].storage.col())
+        #
+        #     boundaries = torch.cat(boundaries_list)
+        #     cells = torch.cat(cells_list)
+        #
+        #     het_data["cell", "boundary_of", "cell"].edge_index = SparseTensor(row=boundaries,col=cells)
+        #     het_data["cell", "coboundary_of", "cell"].edge_index = SparseTensor(row=cells,col=boundaries)
 
         metapaths = []
 
+        #if multiple_node_types:
         if "upper" in self.adjacency_types:
             for d in range(het_data.dimension):
                 if [(f"{d}_cell","boundary_of",f"{d+1}_cell"),(f"{d+1}_cell","coboundary_of",f"{d}_cell")] not in metapaths:
@@ -57,6 +79,13 @@ class HypergraphWiring(WiringTransform):
             for d in range(het_data.dimension):
                 if [(f"{d+1}_cell", "coboundary_of", f"{d}_cell"), (f"{d}_cell", "boundary_of", f"{d + 1}_cell")] not in metapaths:
                     metapaths.append([(f"{d+1}_cell", "coboundary_of", f"{d}_cell"), (f"{d}_cell", "boundary_of", f"{d + 1}_cell")])
+        # else:
+        #     if "upper" in self.adjacency_types:
+        #         if [("cell","boundary_of","cell"),("cell","coboundary_of","cell")] not in metapaths:
+        #                 metapaths.append([("cell","boundary_of","cell"),("cell","coboundary_of","cell")])
+        #     if "lower" in self.adjacency_types:
+        #         if [("cell","coboundary_of","cell"), ("cell","boundary_of","cell")] not in metapaths:
+        #                 metapaths.append([("cell","coboundary_of","cell"), ("cell","boundary_of","cell")])
 
 
         # print(f"Add metapaths with {self.max_hops_from_source} intermediate hops from source.") if self.max_hops_from_source is not None else print(f"Add metapaths with all intermediate hops.")

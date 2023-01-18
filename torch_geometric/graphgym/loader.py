@@ -261,6 +261,8 @@ def set_dataset_info(dataset):
     try:
         if cfg.gnn.graph_type=='hetero':
             cfg.share.dim_in = dataset.data['0_cell']['_Cochain__x'].size()[-1]
+        elif cfg.gnn.graph_type=="hetero_single_node_type":
+            cfg.share.dim_in = dataset.data['cell']['_Cochain__x'].size()[-1]
         else:
             cfg.share.dim_in = dataset.data.x.shape[1]
     except Exception:

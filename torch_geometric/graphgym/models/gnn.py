@@ -42,7 +42,7 @@ def GNNPreMP(dim_in, dim_out, num_layers):
         num_layers (int): Number of layers
 
     """
-    if cfg.gnn.graph_type=='hetero':
+    if cfg.gnn.graph_type.startswith('hetero'):
         return GeneralMultiLayer('linear',
                                  layer_config=new_layer_config(dim_in,
                                                                dim_out,
@@ -89,7 +89,7 @@ class GNNStackStage(nn.Module):
     def forward(self, batch):
         """"""
         for i, layer in enumerate(self.children()):
-            if cfg.gnn.graph_type=='hetero':
+            if cfg.gnn.graph_type.startswith('hetero'):
                 x_dict = batch.x_dict
                 batch = layer(batch) # TODO: is this sufficient?
                 if cfg.gnn.stage_type == 'skipsum':

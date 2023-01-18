@@ -113,7 +113,7 @@ class GNNGraphHead(nn.Module):
         return batch.graph_feature, batch.y
 
     def forward(self, batch):
-        if cfg.gnn.graph_type == 'hetero':
+        if cfg.gnn.graph_type.startswith('hetero'):
             graph_emb = self.pooling_fun(batch)
         else:
             graph_emb = self.pooling_fun(batch.x, batch.batch)
